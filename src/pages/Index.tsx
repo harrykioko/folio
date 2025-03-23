@@ -18,8 +18,8 @@ import VerticalTag from '@/components/VerticalTag';
 export default function Index() {
   const [isVisible, setIsVisible] = useState(false);
   const [isDarkMode, setIsDarkMode] = useState(() => {
-    // Default to dark mode for founders
-    return localStorage.getItem('theme') !== 'light';
+    // Default to light mode for founders
+    return localStorage.getItem('theme') === 'dark';
   });
   
   useEffect(() => {
@@ -172,37 +172,6 @@ export default function Index() {
                 <div className="absolute inset-0 bg-gradient-to-r opacity-0 group-hover:opacity-10 transition-opacity duration-300 rounded-full"></div>
               </div>
             ))}
-          </div>
-          
-          {/* Dashboard preview with more edgy design */}
-          <div 
-            className={`relative mt-16 md:mt-20 rounded-xl overflow-hidden border border-border shadow-xl transition-all duration-700 delay-500 dark:shadow-indigo-900/20 ${
-              isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
-            }`}
-          >
-            <div className="absolute top-0 left-0 right-0 h-10 bg-muted flex items-center px-4">
-              <div className="flex space-x-2">
-                <div className="w-3 h-3 rounded-full bg-red-400"></div>
-                <div className="w-3 h-3 rounded-full bg-yellow-400"></div>
-                <div className="w-3 h-3 rounded-full bg-green-400"></div>
-              </div>
-            </div>
-            <div className="pt-10">
-              {/* Stylized dashboard preview */}
-              <div className="bg-card dark:bg-slate-900 aspect-[16/9] w-full flex flex-col items-center justify-center p-8 overflow-hidden relative">
-                {/* Simulated dashboard elements */}
-                <div className="absolute inset-0 opacity-10">
-                  <div className="absolute top-10 left-10 w-1/3 h-32 rounded-lg border border-foreground/10"></div>
-                  <div className="absolute top-10 right-10 w-1/3 h-32 rounded-lg border border-foreground/10"></div>
-                  <div className="absolute bottom-10 left-1/4 w-1/2 h-24 rounded-lg border border-foreground/10"></div>
-                </div>
-                
-                <div className="z-10 text-center">
-                  <div className="text-3xl font-bold mb-3 bg-clip-text text-transparent bg-gradient-to-r from-indigo-500 to-purple-500 dark:from-indigo-400 dark:to-purple-400">Folio Dashboard</div>
-                  <p className="text-muted-foreground max-w-md">Command your multi-vertical SaaS empire from a single, powerful interface.</p>
-                </div>
-              </div>
-            </div>
           </div>
         </div>
       </main>
