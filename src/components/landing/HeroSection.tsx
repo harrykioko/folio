@@ -43,22 +43,16 @@ export default function HeroSection() {
             Your multi-vertical SaaS portfolio, unified and amplified
           </p>
           <div 
-            className={`flex flex-col sm:flex-row justify-center space-y-4 sm:space-y-0 sm:space-x-4 transition-all duration-700 delay-300 ${
+            className={`flex justify-center transition-all duration-700 delay-300 ${
               isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
             }`}
           >
             <Link 
               to="/auth?signup=true" 
-              className="py-3 px-6 rounded-lg bg-primary text-primary-foreground font-medium flex items-center justify-center space-x-2 hover:bg-primary/90 transition-colors"
+              className="py-3 px-6 rounded-lg bg-primary text-primary-foreground font-medium flex items-center justify-center space-x-2 hover:bg-primary/90 transition-all duration-300 hover:shadow-[0_0_15px_rgba(155,135,245,0.5)] hover:translate-y-[-2px] group"
             >
               <span>Take Control</span>
-              <ArrowRight size={16} />
-            </Link>
-            <Link 
-              to="/auth" 
-              className="py-3 px-6 rounded-lg border border-border hover:bg-accent transition-colors"
-            >
-              Sign In
+              <ArrowRight size={16} className="group-hover:translate-x-1 transition-transform duration-300" />
             </Link>
           </div>
         </div>
