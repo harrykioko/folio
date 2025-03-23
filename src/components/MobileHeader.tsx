@@ -14,7 +14,7 @@ const MobileHeader: React.FC<MobileHeaderProps> = ({
 }) => {
   return (
     <div className="md:hidden flex items-center justify-between p-4 border-b border-border/60 w-full backdrop-blur-md bg-background/80 shadow-sm z-20">
-      <span className="text-xl font-semibold">Folio</span>
+      <span className="text-2xl font-semibold">Folio</span>
       <Button 
         variant="ghost" 
         size="icon" 

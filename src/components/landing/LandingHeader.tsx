@@ -8,7 +8,7 @@ export default function LandingHeader() {
       <div className="container mx-auto">
         <div className="flex justify-between items-center">
           <div className="flex items-center">
-            <span className="text-xl font-bold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-primary to-indigo-500 dark:from-indigo-400 dark:to-purple-400">Folio</span>
+            <span className="text-2xl md:text-3xl font-bold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-primary to-indigo-500 dark:from-indigo-400 dark:to-purple-400">Folio</span>
           </div>
           <div className="flex items-center space-x-4">
             <ThemeToggle />
