@@ -1,3 +1,4 @@
+
 import * as React from "react"
 import useEmblaCarousel, {
   type UseEmblaCarouselType,
@@ -17,6 +18,8 @@ type CarouselProps = {
   plugins?: CarouselPlugin
   orientation?: "horizontal" | "vertical"
   setApi?: (api: CarouselApi) => void
+  autoplay?: boolean
+  autoplayInterval?: number
 }
 
 type CarouselContextProps = {
@@ -52,6 +55,8 @@ const Carousel = React.forwardRef<
       plugins,
       className,
       children,
+      autoplay = false,
+      autoplayInterval = 5000,
       ...props
     },
     ref
@@ -65,6 +70,30 @@ const Carousel = React.forwardRef<
     )
     const [canScrollPrev, setCanScrollPrev] = React.useState(false)
     const [canScrollNext, setCanScrollNext] = React.useState(false)
+    
+    // Auto-rotation timer reference
+    const autoplayTimerRef = React.useRef<NodeJS.Timeout | null>(null)
+
+    const startAutoplay = React.useCallback(() => {
+      if (!autoplay || !api) return
+      
+      stopAutoplay()
+      
+      autoplayTimerRef.current = setInterval(() => {
+        if (!api.canScrollNext()) {
+          api.scrollTo(0)
+        } else {
+          api.scrollNext()
+        }
+      }, autoplayInterval)
+    }, [api, autoplay, autoplayInterval])
+    
+    const stopAutoplay = React.useCallback(() => {
+      if (autoplayTimerRef.current) {
+        clearInterval(autoplayTimerRef.current)
+        autoplayTimerRef.current = null
+      }
+    }, [])
 
     const onSelect = React.useCallback((api: CarouselApi) => {
       if (!api) {
@@ -77,11 +106,17 @@ const Carousel = React.forwardRef<
 
     const scrollPrev = React.useCallback(() => {
       api?.scrollPrev()
-    }, [api])
+      if (autoplay) {
+        startAutoplay()
+      }
+    }, [api, autoplay, startAutoplay])
 
     const scrollNext = React.useCallback(() => {
       api?.scrollNext()
-    }, [api])
+      if (autoplay) {
+        startAutoplay()
+      }
+    }, [api, autoplay, startAutoplay])
 
     const handleKeyDown = React.useCallback(
       (event: React.KeyboardEvent<HTMLDivElement>) => {
@@ -117,6 +152,30 @@ const Carousel = React.forwardRef<
         api?.off("select", onSelect)
       }
     }, [api, onSelect])
+    
+    // Start autoplay when component mounts or when api is initialized
+    React.useEffect(() => {
+      if (autoplay && api) {
+        startAutoplay()
+      }
+      
+      return () => {
+        stopAutoplay()
+      }
+    }, [api, autoplay, startAutoplay, stopAutoplay])
+    
+    // Pause autoplay on mouse enter, resume on mouse leave
+    const handleMouseEnter = React.useCallback(() => {
+      if (autoplay) {
+        stopAutoplay()
+      }
+    }, [autoplay, stopAutoplay])
+    
+    const handleMouseLeave = React.useCallback(() => {
+      if (autoplay) {
+        startAutoplay()
+      }
+    }, [autoplay, startAutoplay])
 
     return (
       <CarouselContext.Provider
@@ -130,11 +189,15 @@ const Carousel = React.forwardRef<
           scrollNext,
           canScrollPrev,
           canScrollNext,
+          autoplay,
+          autoplayInterval,
         }}
       >
         <div
           ref={ref}
           onKeyDownCapture={handleKeyDown}
+          onMouseEnter={handleMouseEnter}
+          onMouseLeave={handleMouseLeave}
           className={cn("relative", className)}
           role="region"
           aria-roledescription="carousel"
