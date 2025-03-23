@@ -48,7 +48,7 @@ export default function HeroSection() {
           >
             <Link 
               to="/auth?signup=true" 
-              className="py-3 px-6 rounded-md bg-background/15 backdrop-blur-md border border-white/30 text-foreground font-medium flex items-center justify-center space-x-2 transition-all duration-300 hover:shadow-[0_0_15px_rgba(255,255,255,0.15)] hover:bg-background/20 hover:text-white hover:translate-y-[-2px] group"
+              className="py-3 px-6 rounded-md bg-background/25 backdrop-blur-xl border border-white/40 text-foreground font-medium flex items-center justify-center space-x-2 transition-all duration-300 hover:shadow-[0_0_20px_rgba(255,255,255,0.3)] dark:hover:shadow-[0_0_20px_rgba(139,92,246,0.3)] hover:bg-background/30 hover:text-white hover:translate-y-[-2px] group dark:bg-secondary/50 dark:border-white/10 dark:hover:bg-secondary/70"
             >
               <span>Take Control</span>
               <ArrowRight size={16} className="group-hover:translate-x-1 transition-transform duration-300" />
