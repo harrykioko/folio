@@ -1,6 +1,6 @@
 
-import React, { useState } from 'react';
-import { Outlet } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { Outlet, useLocation } from 'react-router-dom';
 import { CommandIcon } from 'lucide-react';
 
 import Sidebar from './Sidebar';
@@ -13,9 +13,10 @@ import { Button } from './ui/button';
 const MainLayout: React.FC<{ children?: React.ReactNode }> = ({ children }) => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isCommandPaletteOpen, setIsCommandPaletteOpen] = useState(false);
+  const location = useLocation();
   
   // Handle keyboard shortcut for command palette
-  React.useEffect(() => {
+  useEffect(() => {
     const down = (e: KeyboardEvent) => {
       if (e.key === 'k' && (e.metaKey || e.ctrlKey)) {
         e.preventDefault();
@@ -49,9 +50,9 @@ const MainLayout: React.FC<{ children?: React.ReactNode }> = ({ children }) => {
       />
       
       {/* Main content */}
-      <div className="md:pl-64 flex flex-col flex-1">
-        <main className="flex-1 overflow-y-auto">
-          <div className="container py-6">
+      <div className="md:pl-64 flex flex-col flex-1 w-full">
+        <main className="flex-1 overflow-y-auto pt-20 md:pt-6">
+          <div className="container px-4 md:px-6">
             {/* Global search button (visible on mobile) */}
             <div className="md:hidden flex justify-end mb-4">
               <Button 

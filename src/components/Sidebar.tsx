@@ -21,7 +21,12 @@ const Sidebar: React.FC<SidebarProps> = ({ navItems, setIsCommandPaletteOpen }) 
   useEffect(() => {
     const savedState = localStorage.getItem('sidebar-state');
     if (savedState) {
-      setSidebarState(JSON.parse(savedState));
+      try {
+        setSidebarState(JSON.parse(savedState));
+      } catch (e) {
+        console.error("Failed to parse sidebar state:", e);
+        localStorage.removeItem('sidebar-state');
+      }
     }
   }, []);
   
