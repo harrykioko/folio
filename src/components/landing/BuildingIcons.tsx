@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { Rocket, Code, Network, PenTool, LineChart } from 'lucide-react';
+import { Rocket, Code, Network, Blueprint, Capital } from 'lucide-react';
 import { motion } from 'framer-motion';
 
 interface IconButtonProps {
@@ -37,7 +37,7 @@ export default function BuildingIcons() {
       color: "bg-gradient-to-br from-purple-500/10 to-indigo-500/10 hover:from-purple-500/20 hover:to-indigo-500/20 text-purple-700 dark:text-purple-300" 
     },
     { 
-      icon: <PenTool className="h-6 w-6" />, 
+      icon: <Blueprint className="h-6 w-6" />, 
       label: "Strategy", 
       color: "bg-gradient-to-br from-blue-500/10 to-sky-500/10 hover:from-blue-500/20 hover:to-sky-500/20 text-blue-700 dark:text-blue-300" 
     },
@@ -52,7 +52,7 @@ export default function BuildingIcons() {
       color: "bg-gradient-to-br from-pink-500/10 to-rose-500/10 hover:from-pink-500/20 hover:to-rose-500/20 text-pink-700 dark:text-pink-300" 
     },
     { 
-      icon: <LineChart className="h-6 w-6" />, 
+      icon: <Capital className="h-6 w-6" />, 
       label: "Funding", 
       color: "bg-gradient-to-br from-orange-500/10 to-amber-500/10 hover:from-orange-500/20 hover:to-amber-500/20 text-orange-700 dark:text-orange-300" 
     }
