@@ -153,18 +153,9 @@ export default function Auth() {
               )}
             </Button>
             
-            <div className="relative my-6">
-              <div className="absolute inset-0 flex items-center">
-                <div className="w-full border-t border-white/20 dark:border-white/10"></div>
-              </div>
-              <div className="relative flex justify-center text-xs">
-                <span className="px-2 bg-white/15 dark:bg-black/40 backdrop-blur-md text-muted-foreground">
-                  or
-                </span>
-              </div>
-            </div>
+            {/* Removed the "or" divider here */}
             
-            <div className="mt-4 text-center">
+            <div className="mt-6 text-center">
               <button
                 type="button"
                 onClick={() => setIsSignIn(!isSignIn)}
