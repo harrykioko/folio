@@ -8,6 +8,7 @@ import MobileHeader from './MobileHeader';
 import MobileMenu from './MobileMenu';
 import CommandPalette from './CommandPalette';
 import { navItems, commandDestinations } from '@/config/navigation';
+import { Button } from './ui/button';
 
 const MainLayout: React.FC<{ children?: React.ReactNode }> = ({ children }) => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -50,7 +51,19 @@ const MainLayout: React.FC<{ children?: React.ReactNode }> = ({ children }) => {
       {/* Main content */}
       <div className="md:pl-64 flex flex-col flex-1">
         <main className="flex-1 overflow-y-auto">
-          <div className="py-6">
+          <div className="container py-6">
+            {/* Global search button (visible on mobile) */}
+            <div className="md:hidden flex justify-end mb-4">
+              <Button 
+                variant="outline" 
+                size="sm" 
+                className="text-muted-foreground"
+                onClick={() => setIsCommandPaletteOpen(true)}
+              >
+                <CommandIcon className="h-4 w-4 mr-2" />
+                Search
+              </Button>
+            </div>
             {children || <Outlet />}
           </div>
         </main>
