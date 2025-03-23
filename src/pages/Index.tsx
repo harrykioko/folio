@@ -206,29 +206,6 @@ export default function Index() {
         </div>
       </section>
       
-      {/* Simplified call to action */}
-      <section className="relative z-10 px-4 py-16">
-        <div className="container mx-auto max-w-screen-lg">
-          <div className="bg-card dark:bg-slate-900/60 rounded-2xl p-8 md:p-12 border border-border shadow-sm">
-            <div className="max-w-2xl mx-auto text-center">
-              <h2 className="text-2xl md:text-3xl font-bold tracking-tight mb-4">
-                Start Building Your Empire Today
-              </h2>
-              <p className="text-muted-foreground mb-8">
-                Join the founders who are scaling multi-vertical SaaS businesses faster and more efficiently.
-              </p>
-              <Link 
-                to="/auth?signup=true" 
-                className="inline-flex items-center space-x-2 py-3 px-6 rounded-lg bg-primary text-primary-foreground font-medium hover:bg-primary/90 transition-colors"
-              >
-                <span>Get Started</span>
-                <ArrowRight size={16} />
-              </Link>
-            </div>
-          </div>
-        </div>
-      </section>
-      
       {/* Minimalist footer */}
       <footer className="relative z-10 px-4 py-8 border-t border-border">
         <div className="container mx-auto max-w-screen-lg">
