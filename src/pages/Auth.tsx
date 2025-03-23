@@ -4,6 +4,12 @@ import { useNavigate } from 'react-router-dom';
 import { Eye, EyeOff, ArrowRight } from 'lucide-react';
 import { signIn, signUp } from '../lib/supabase';
 import { useToast } from '../hooks/use-toast';
+import BackgroundElements from '@/components/landing/BackgroundElements';
+import ThemeToggle from '@/components/landing/ThemeToggle';
+import { Link } from 'react-router-dom';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Form, FormField, FormItem, FormLabel, FormControl } from '@/components/ui/form';
 
 export default function Auth() {
   const [isSignIn, setIsSignIn] = useState(true);
@@ -53,52 +59,70 @@ export default function Auth() {
   };
   
   return (
-    <div className="min-h-screen flex flex-col justify-center items-center bg-background p-4">
-      <div className="w-full max-w-md mx-auto">
-        {/* Logo and Title */}
-        <div className="text-center mb-8 animate-fade-in">
-          <h1 className="text-3xl font-bold tracking-tight mb-1">Folio</h1>
-          <p className="text-muted-foreground">
-            {isSignIn ? 'Sign in to your account' : 'Create a new account'}
-          </p>
+    <div className="min-h-screen flex flex-col justify-center items-center bg-background relative overflow-hidden">
+      {/* Background elements */}
+      <BackgroundElements />
+      
+      {/* Top navigation */}
+      <div className="absolute top-0 left-0 w-full p-4 z-20">
+        <div className="container mx-auto flex justify-between items-center">
+          <Link to="/" className="text-2xl md:text-3xl font-bold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-primary to-indigo-500 dark:from-indigo-400 dark:to-purple-400">
+            Folio
+          </Link>
+          <ThemeToggle />
         </div>
-        
-        {/* Auth Form */}
-        <div className="bg-card shadow-sm border border-border rounded-xl p-6 animate-scale-in">
-          <form onSubmit={handleAuth} className="space-y-4">
+      </div>
+      
+      <div className="w-full max-w-md mx-auto px-6 z-10">
+        {/* Auth Card */}
+        <div className="backdrop-blur-xl bg-white/15 dark:bg-black/30 border border-white/30 dark:border-white/10 rounded-2xl shadow-[0_8px_32px_rgba(0,0,0,0.12)] dark:shadow-[0_8px_32px_rgba(0,0,0,0.3)] p-8 animate-scale-in">
+          {/* Card Header */}
+          <div className="text-center mb-8 animate-fade-in">
+            <h1 className="text-3xl font-bold tracking-tight mb-2 text-foreground">
+              {isSignIn ? 'Welcome back!' : 'Create account'}
+            </h1>
+            <p className="text-muted-foreground">
+              {isSignIn ? 'Sign in to your account' : 'Sign up for a new account'}
+            </p>
+          </div>
+          
+          {/* Auth Form */}
+          <form onSubmit={handleAuth} className="space-y-5">
             <div className="space-y-2">
-              <label htmlFor="email" className="text-sm font-medium block">
+              <Label htmlFor="email" className="text-sm font-medium block text-foreground">
                 Email
-              </label>
-              <input
-                id="email"
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="name@example.com"
-                required
-                className="w-full px-3 py-2 border border-input rounded-lg bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary transition-all"
-              />
+              </Label>
+              <div className="relative">
+                <Input
+                  id="email"
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder="name@example.com"
+                  required
+                  className="w-full px-4 py-2 bg-white/10 dark:bg-black/20 backdrop-blur-md border border-white/30 dark:border-white/10 rounded-lg focus:ring-2 focus:ring-primary/50 text-foreground"
+                />
+              </div>
             </div>
             
             <div className="space-y-2">
-              <label htmlFor="password" className="text-sm font-medium block">
+              <Label htmlFor="password" className="text-sm font-medium block text-foreground">
                 Password
-              </label>
+              </Label>
               <div className="relative">
-                <input
+                <Input
                   id="password"
                   type={showPassword ? 'text' : 'password'}
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="••••••••"
                   required
-                  className="w-full px-3 py-2 border border-input rounded-lg bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary transition-all pr-10"
+                  className="w-full px-4 py-2 bg-white/10 dark:bg-black/20 backdrop-blur-md border border-white/30 dark:border-white/10 rounded-lg pr-10 focus:ring-2 focus:ring-primary/50 text-foreground"
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-foreground/70 hover:text-foreground transition-colors"
                 >
                   {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
                 </button>
@@ -107,7 +131,7 @@ export default function Auth() {
             
             {isSignIn && (
               <div className="text-right">
-                <a href="#" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
+                <a href="#" className="text-sm text-primary/90 hover:text-primary transition-colors">
                   Forgot password?
                 </a>
               </div>
@@ -116,7 +140,7 @@ export default function Auth() {
             <button
               type="submit"
               disabled={isLoading}
-              className="w-full py-2.5 px-4 bg-primary text-primary-foreground rounded-lg font-medium transition-all hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 disabled:opacity-50 disabled:pointer-events-none flex items-center justify-center space-x-2"
+              className="w-full py-2.5 px-4 bg-primary/90 hover:bg-primary text-primary-foreground rounded-lg font-medium transition-all backdrop-blur-sm border border-primary/30 shadow-[0_4px_16px_rgba(0,0,0,0.1)] hover:shadow-[0_6px_20px_rgba(0,0,0,0.15)] disabled:opacity-50 disabled:pointer-events-none flex items-center justify-center space-x-2"
             >
               {isLoading ? (
                 <div className="h-5 w-5 border-2 border-primary-foreground border-t-transparent rounded-full animate-spin" />
@@ -127,23 +151,34 @@ export default function Auth() {
                 </>
               )}
             </button>
+            
+            <div className="relative my-6">
+              <div className="absolute inset-0 flex items-center">
+                <div className="w-full border-t border-white/20 dark:border-white/10"></div>
+              </div>
+              <div className="relative flex justify-center text-xs">
+                <span className="px-2 bg-white/10 dark:bg-black/30 backdrop-blur-md text-muted-foreground">
+                  or
+                </span>
+              </div>
+            </div>
+            
+            <div className="mt-4 text-center">
+              <button
+                type="button"
+                onClick={() => setIsSignIn(!isSignIn)}
+                className="text-primary/90 hover:text-primary transition-colors text-sm font-medium"
+              >
+                {isSignIn ? "Don't have an account? Sign up" : "Already have an account? Sign in"}
+              </button>
+            </div>
           </form>
-          
-          <div className="mt-6 text-center">
-            <button
-              type="button"
-              onClick={() => setIsSignIn(!isSignIn)}
-              className="text-sm text-muted-foreground hover:text-foreground transition-colors"
-            >
-              {isSignIn ? "Don't have an account? Sign up" : "Already have an account? Sign in"}
-            </button>
-          </div>
         </div>
-      </div>
-      
-      {/* Footer */}
-      <div className="mt-8 text-center text-sm text-muted-foreground animate-fade-in">
-        <p>&copy; {new Date().getFullYear()} Folio. All rights reserved.</p>
+        
+        {/* Footer */}
+        <div className="mt-8 text-center text-sm text-muted-foreground/70 animate-fade-in">
+          <p>&copy; {new Date().getFullYear()} Folio. All rights reserved.</p>
+        </div>
       </div>
     </div>
   );
