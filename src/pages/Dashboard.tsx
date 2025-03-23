@@ -1,9 +1,8 @@
-
 import React, { useState } from 'react';
 import { 
   Bell, Calendar, Clock, LineChart, Users, 
   CheckCircle2, ArrowUpRight, Plus, MessageCircle,
-  Filter, User, Link
+  Filter, User, Link, FileText, Database
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -61,12 +60,12 @@ const Dashboard = () => {
     { title: 'Team Utilization', value: '87%', change: '+2%', isPositive: true },
   ];
 
-  // Quick access tiles
+  // Updated quick access tiles with the requested actions
   const quickAccess = [
     { title: 'New Task', icon: CheckCircle2, color: 'bg-blue-500' },
-    { title: 'New Document', icon: Calendar, color: 'bg-green-500' },
-    { title: 'Schedule Meeting', icon: Users, color: 'bg-purple-500' },
-    { title: 'Ask Assistant', icon: MessageCircle, color: 'bg-amber-500' },
+    { title: 'New Document', icon: FileText, color: 'bg-green-500' },
+    { title: 'New Asset', icon: Database, color: 'bg-purple-500' },
+    { title: 'Ask Foley', icon: MessageCircle, color: 'bg-amber-500' },
   ];
 
   // Filter activity feed based on selections
