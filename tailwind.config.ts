@@ -1,4 +1,3 @@
-
 import type { Config } from "tailwindcss";
 
 export default {
@@ -114,8 +113,8 @@ export default {
 				'spin-slow': 'spin-slow 15s linear infinite'
 			},
 			fontFamily: {
-				sans: ['SF Pro Display', 'Inter', 'sans-serif'],
-				mono: ['SF Mono', 'JetBrains Mono', 'monospace']
+				sans: ['Inter', 'Roboto', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'Helvetica', 'Arial', 'sans-serif'],
+				mono: ['Roboto Mono', 'SFMono-Regular', 'Menlo', 'Consolas', 'Liberation Mono', 'Courier New', 'monospace']
 			}
 		}
 	},
