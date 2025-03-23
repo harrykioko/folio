@@ -10,6 +10,7 @@ import { Link } from 'react-router-dom';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Form, FormField, FormItem, FormLabel, FormControl } from '@/components/ui/form';
+import { Button } from '@/components/ui/button';
 
 export default function Auth() {
   const [isSignIn, setIsSignIn] = useState(true);
@@ -74,8 +75,8 @@ export default function Auth() {
       </div>
       
       <div className="w-full max-w-md mx-auto px-6 z-10">
-        {/* Auth Card */}
-        <div className="backdrop-blur-xl bg-white/15 dark:bg-black/30 border border-white/30 dark:border-white/10 rounded-2xl shadow-[0_8px_32px_rgba(0,0,0,0.12)] dark:shadow-[0_8px_32px_rgba(0,0,0,0.3)] p-8 animate-scale-in">
+        {/* Auth Card - Enhanced glassmorphic effect */}
+        <div className="backdrop-blur-2xl bg-white/20 dark:bg-black/40 border border-white/30 dark:border-white/10 rounded-xl shadow-[0_8px_32px_rgba(0,0,0,0.15)] dark:shadow-[0_8px_32px_rgba(0,0,0,0.35)] p-8 animate-scale-in ring-1 ring-white/50 dark:ring-white/10">
           {/* Card Header */}
           <div className="text-center mb-8 animate-fade-in">
             <h1 className="text-3xl font-bold tracking-tight mb-2 text-foreground">
@@ -100,7 +101,7 @@ export default function Auth() {
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="name@example.com"
                   required
-                  className="w-full px-4 py-2 bg-white/10 dark:bg-black/20 backdrop-blur-md border border-white/30 dark:border-white/10 rounded-lg focus:ring-2 focus:ring-primary/50 text-foreground"
+                  className="w-full px-4 py-2 bg-white/15 dark:bg-white/5 backdrop-blur-md border border-white/30 dark:border-white/10 rounded-lg focus:ring-2 focus:ring-primary/50 text-foreground"
                 />
               </div>
             </div>
@@ -117,7 +118,7 @@ export default function Auth() {
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="••••••••"
                   required
-                  className="w-full px-4 py-2 bg-white/10 dark:bg-black/20 backdrop-blur-md border border-white/30 dark:border-white/10 rounded-lg pr-10 focus:ring-2 focus:ring-primary/50 text-foreground"
+                  className="w-full px-4 py-2 bg-white/15 dark:bg-white/5 backdrop-blur-md border border-white/30 dark:border-white/10 rounded-lg pr-10 focus:ring-2 focus:ring-primary/50 text-foreground"
                 />
                 <button
                   type="button"
@@ -137,7 +138,7 @@ export default function Auth() {
               </div>
             )}
             
-            <button
+            <Button
               type="submit"
               disabled={isLoading}
               className="w-full py-2.5 px-4 bg-primary/90 hover:bg-primary text-primary-foreground rounded-lg font-medium transition-all backdrop-blur-sm border border-primary/30 shadow-[0_4px_16px_rgba(0,0,0,0.1)] hover:shadow-[0_6px_20px_rgba(0,0,0,0.15)] disabled:opacity-50 disabled:pointer-events-none flex items-center justify-center space-x-2"
@@ -150,14 +151,14 @@ export default function Auth() {
                   <ArrowRight size={16} />
                 </>
               )}
-            </button>
+            </Button>
             
             <div className="relative my-6">
               <div className="absolute inset-0 flex items-center">
                 <div className="w-full border-t border-white/20 dark:border-white/10"></div>
               </div>
               <div className="relative flex justify-center text-xs">
-                <span className="px-2 bg-white/10 dark:bg-black/30 backdrop-blur-md text-muted-foreground">
+                <span className="px-2 bg-white/15 dark:bg-black/40 backdrop-blur-md text-muted-foreground">
                   or
                 </span>
               </div>
