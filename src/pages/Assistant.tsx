@@ -1,5 +1,5 @@
 
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { 
   Bot, 
   Send, 
@@ -19,7 +19,12 @@ import {
   X,
   Plus,
   MessageSquare,
-  ImagePlus
+  ImagePlus,
+  ExternalLink,
+  Calendar,
+  Briefcase,
+  CheckSquare,
+  Database
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
@@ -30,7 +35,8 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Drawer, DrawerContent, DrawerHeader, DrawerTitle, DrawerTrigger } from '@/components/ui/drawer';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from '@/components/ui/resizable';
 
 type Message = {
   id: string;
@@ -76,6 +82,11 @@ const Assistant = () => {
   ]);
   const [attachments, setAttachments] = useState<string[]>([]);
   const [isContextOpen, setIsContextOpen] = useState(true);
+  const [activeTab, setActiveTab] = useState('context');
+  const [selectedTemplate, setSelectedTemplate] = useState<TemplateItem | null>(null);
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [selectedContextItem, setSelectedContextItem] = useState<ContextItem | null>(null);
+  
   const fileInputRef = useRef<HTMLInputElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   
@@ -112,6 +123,11 @@ const Assistant = () => {
     { id: '5', name: 'Code Snippet', description: 'Generate sample code', icon: <Code className="h-4 w-4" /> },
   ];
 
+  // Auto-scroll to bottom when new messages are added
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [messages]);
+
   const handleSendMessage = () => {
     if (!input.trim() && attachments.length === 0) return;
     
@@ -136,11 +152,6 @@ const Assistant = () => {
         timestamp: new Date(),
       };
       setMessages(prevMessages => [...prevMessages, assistantMessage]);
-      
-      // Scroll to bottom
-      setTimeout(() => {
-        messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-      }, 100);
     }, 1000);
   };
 
@@ -174,30 +185,13 @@ const Assistant = () => {
   };
   
   const handleTemplateClick = (template: TemplateItem) => {
-    const userMessage: Message = {
-      id: Date.now().toString(),
-      content: `Generate a ${template.name}`,
-      role: 'user',
-      timestamp: new Date(),
-    };
-    
-    setMessages([...messages, userMessage]);
-    
-    // Simulate assistant response for template
-    setTimeout(() => {
-      const assistantMessage: Message = {
-        id: (Date.now() + 1).toString(),
-        content: `Here's a ${template.name} template. This is a placeholder response. In the future, I'll generate customized ${template.name.toLowerCase()} content based on your specific requirements.`,
-        role: 'assistant',
-        timestamp: new Date(),
-      };
-      setMessages(prevMessages => [...prevMessages, assistantMessage]);
-      
-      // Scroll to bottom
-      setTimeout(() => {
-        messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-      }, 100);
-    }, 1000);
+    setSelectedTemplate(template);
+    setIsDialogOpen(true);
+  };
+
+  const handleContextItemClick = (item: ContextItem) => {
+    setSelectedContextItem(item);
+    setIsDialogOpen(true);
   };
 
   // Format relative time
@@ -211,117 +205,226 @@ const Assistant = () => {
     return `${diffInDays}d ago`;
   };
 
+  // Get icon based on context item type
+  const getContextItemIcon = (type: string) => {
+    switch(type) {
+      case 'document': return <FileText className="h-4 w-4" />;
+      case 'project': return <Briefcase className="h-4 w-4" />;
+      case 'task': return <CheckSquare className="h-4 w-4" />;
+      case 'asset': return <Database className="h-4 w-4" />;
+      default: return <Info className="h-4 w-4" />;
+    }
+  };
+
   return (
-    <div className="container max-w-full mx-auto px-4 py-6">
-      <div className="flex flex-col md:flex-row gap-4">
-        {/* Context Sidebar for Desktop */}
-        <div className="hidden md:flex flex-col w-64 space-y-4">
-          <Card className="flex-1">
-            <CardHeader className="pb-2">
-              <CardTitle className="text-lg flex items-center justify-between">
-                <div className="flex items-center">
-                  <Info className="mr-2 h-4 w-4" />
-                  Context
-                </div>
-                <Button variant="ghost" size="icon" onClick={() => setIsContextOpen(!isContextOpen)} className="h-7 w-7">
-                  <ChevronDown className={`h-4 w-4 transition-transform ${isContextOpen ? '' : 'rotate-180'}`} />
-                </Button>
-              </CardTitle>
-              <CardDescription>Available information</CardDescription>
-            </CardHeader>
+    <div className="h-[calc(100vh-4rem)] px-0 -mt-6 -mx-6">
+      <ResizablePanelGroup direction="horizontal" className="h-full">
+        {/* Left Side - Chat Window */}
+        <ResizablePanel defaultSize={65} minSize={40} className="h-full">
+          <div className="flex flex-col h-full">
+            {/* Header */}
+            <div className="px-6 py-4 border-b">
+              <h1 className="text-xl font-semibold flex items-center">
+                <Bot className="mr-2 h-5 w-5" />
+                Foley
+              </h1>
+              <p className="text-sm text-muted-foreground">Your intelligent AI assistant</p>
+            </div>
             
-            {isContextOpen && (
-              <CardContent className="space-y-4">
-                <ScrollArea className="h-[400px] pr-4">
-                  <div className="space-y-3">
-                    {contextItems.map((item) => (
-                      <div key={item.id} className="border rounded-md p-3 hover:bg-accent/50 cursor-pointer transition-all">
-                        <div className="flex items-start justify-between">
-                          <div>
-                            <h4 className="font-medium text-sm">{item.title}</h4>
-                            {item.description && (
-                              <p className="text-xs text-muted-foreground mt-1">{item.description}</p>
-                            )}
-                          </div>
-                          <Badge variant="outline" className="text-xs">
-                            {item.type}
-                          </Badge>
+            {/* Function Buttons */}
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 px-6 py-3 border-b">
+              <Button variant="outline" className="justify-start text-xs">
+                <Sparkles className="mr-2 h-3.5 w-3.5" />
+                Generate Content
+              </Button>
+              <Button variant="outline" className="justify-start text-xs">
+                <BarChart3 className="mr-2 h-3.5 w-3.5" />
+                Analyze Data
+              </Button>
+              <Button variant="outline" className="justify-start text-xs">
+                <FileText className="mr-2 h-3.5 w-3.5" />
+                Summarize Document
+              </Button>
+              <Button variant="outline" className="justify-start text-xs">
+                <LayoutList className="mr-2 h-3.5 w-3.5" />
+                Create List
+              </Button>
+            </div>
+            
+            {/* Message Area */}
+            <div className="flex-1 overflow-hidden">
+              <ScrollArea className="h-full px-6 py-4">
+                <div className="space-y-4">
+                  {messages.map((message) => (
+                    <div 
+                      key={message.id} 
+                      className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}
+                    >
+                      <div 
+                        className={`flex max-w-[80%] items-start gap-2 rounded-lg px-4 py-2 
+                          ${message.role === 'user' 
+                            ? 'bg-primary text-primary-foreground' 
+                            : 'bg-muted'}`}
+                      >
+                        {message.role === 'assistant' && (
+                          <Avatar className="h-8 w-8 mt-1 flex-shrink-0">
+                            <AvatarFallback>AI</AvatarFallback>
+                            <AvatarImage src="/placeholder.svg" alt="Foley AI" />
+                          </Avatar>
+                        )}
+                        <div>
+                          <p className="text-sm whitespace-pre-wrap">{message.content}</p>
+                          <p className="text-xs opacity-50 mt-1">
+                            {message.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                          </p>
                         </div>
+                        {message.role === 'user' && (
+                          <User className="h-5 w-5 mt-1 flex-shrink-0" />
+                        )}
                       </div>
-                    ))}
-                  </div>
-                </ScrollArea>
-                
-                <Separator />
-                
-                <div>
-                  <h4 className="text-sm font-medium mb-2">Recent Projects</h4>
-                  <ul className="space-y-2">
-                    <li className="text-xs text-muted-foreground hover:text-foreground cursor-pointer">Website Redesign</li>
-                    <li className="text-xs text-muted-foreground hover:text-foreground cursor-pointer">Mobile App v2.0</li>
-                    <li className="text-xs text-muted-foreground hover:text-foreground cursor-pointer">Marketing Campaign</li>
-                  </ul>
+                    </div>
+                  ))}
+                  <div ref={messagesEndRef} />
                 </div>
-              </CardContent>
-            )}
-          </Card>
-          
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-lg flex items-center">
-                <History className="mr-2 h-4 w-4" />
-                History
-              </CardTitle>
-              <CardDescription>Previous queries</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <ul className="space-y-2">
-                {commandHistory.map((item) => (
-                  <li 
-                    key={item.id} 
-                    className="text-xs flex justify-between hover:bg-accent/50 p-2 rounded-md cursor-pointer"
-                    onClick={() => handleHistoryClick(item.query)}
-                  >
-                    <span className="line-clamp-1">{item.query}</span>
-                    <span className="text-muted-foreground whitespace-nowrap ml-2">{formatRelativeTime(item.date)}</span>
-                  </li>
-                ))}
-              </ul>
-            </CardContent>
-          </Card>
-        </div>
-        
-        {/* Main Content */}
-        <div className="flex-1 flex flex-col min-h-[calc(100vh-150px)]">
-          <div className="flex justify-between items-center mb-4">
-            <h1 className="text-2xl font-semibold flex items-center">
-              <Bot className="mr-2 h-6 w-6" />
-              Foley
-            </h1>
+              </ScrollArea>
+            </div>
             
-            {/* Context Sidebar for Mobile */}
-            <div className="md:hidden">
-              <Drawer>
-                <DrawerTrigger asChild>
-                  <Button variant="outline" size="sm">
-                    <Info className="h-4 w-4 mr-2" />
-                    Context
+            {/* Input Area */}
+            <div className="px-6 py-4 border-t">
+              {/* Suggestion Chips */}
+              <div className="flex flex-wrap gap-2 mb-3">
+                {suggestionChips.map((chip) => (
+                  <Badge 
+                    key={chip.id} 
+                    variant="secondary" 
+                    className="cursor-pointer hover:bg-secondary/80"
+                    onClick={() => handleSuggestionClick(chip.text)}
+                  >
+                    {chip.text}
+                  </Badge>
+                ))}
+              </div>
+              
+              {/* Attachments */}
+              {attachments.length > 0 && (
+                <div className="mb-3 flex flex-wrap gap-2 w-full">
+                  {attachments.map((attachment, index) => (
+                    <Badge key={index} variant="secondary" className="pl-2 pr-1 py-1 flex items-center gap-1">
+                      <FileText className="h-3 w-3" />
+                      <span className="text-xs truncate max-w-[150px]">{attachment}</span>
+                      <Button 
+                        variant="ghost" 
+                        size="icon" 
+                        className="h-4 w-4 ml-1"
+                        onClick={() => handleRemoveAttachment(index)}
+                      >
+                        <X className="h-3 w-3" />
+                      </Button>
+                    </Badge>
+                  ))}
+                </div>
+              )}
+              
+              {/* Input Box */}
+              <div className="flex space-x-2">
+                <Textarea 
+                  placeholder="Type your message here..."
+                  value={input}
+                  onChange={e => setInput(e.target.value)}
+                  onKeyDown={handleKeyDown}
+                  className="min-h-[60px]"
+                />
+                <div className="flex flex-col space-y-2">
+                  <TooltipProvider>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Button 
+                          onClick={() => fileInputRef.current?.click()} 
+                          size="icon" 
+                          variant="outline"
+                          className="h-[28px] w-[28px]"
+                        >
+                          <Upload className="h-4 w-4" />
+                          <input 
+                            type="file" 
+                            ref={fileInputRef} 
+                            onChange={handleFileUpload} 
+                            className="hidden" 
+                            multiple 
+                          />
+                        </Button>
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        <p>Attach files</p>
+                      </TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
+                  
+                  <Button onClick={handleSendMessage} size="icon" className="h-[28px] w-[28px]">
+                    <Send className="h-4 w-4" />
                   </Button>
-                </DrawerTrigger>
-                <DrawerContent>
-                  <DrawerHeader>
-                    <DrawerTitle>Context</DrawerTitle>
-                  </DrawerHeader>
-                  <div className="p-4 space-y-4">
+                </div>
+              </div>
+            </div>
+          </div>
+        </ResizablePanel>
+        
+        {/* Resize Handle */}
+        <ResizableHandle withHandle />
+        
+        {/* Right Side - Context, History, Templates */}
+        <ResizablePanel defaultSize={35} minSize={25} className="h-full">
+          <div className="flex flex-col h-full">
+            {/* Tabs for different right panel content */}
+            <Tabs 
+              defaultValue="context" 
+              value={activeTab}
+              onValueChange={setActiveTab} 
+              className="w-full h-full flex flex-col"
+            >
+              <div className="px-6 py-3 border-b">
+                <TabsList className="grid grid-cols-3 w-full">
+                  <TabsTrigger value="context" className="text-xs">
+                    <Info className="h-3.5 w-3.5 mr-1" />
+                    Context
+                  </TabsTrigger>
+                  <TabsTrigger value="history" className="text-xs">
+                    <History className="h-3.5 w-3.5 mr-1" />
+                    History
+                  </TabsTrigger>
+                  <TabsTrigger value="templates" className="text-xs">
+                    <FileText className="h-3.5 w-3.5 mr-1" />
+                    Templates
+                  </TabsTrigger>
+                </TabsList>
+              </div>
+              
+              {/* Context Tab Content */}
+              <TabsContent value="context" className="flex-1 overflow-hidden m-0 p-0">
+                <ScrollArea className="h-full px-6 py-4">
+                  <div className="space-y-4">
+                    <div className="flex justify-between items-center">
+                      <h3 className="text-sm font-medium">Available Information</h3>
+                    </div>
+                    
                     <div className="space-y-3">
                       {contextItems.map((item) => (
-                        <div key={item.id} className="border rounded-md p-3">
+                        <div 
+                          key={item.id} 
+                          className="border rounded-md p-3 hover:bg-accent/50 cursor-pointer transition-all"
+                          onClick={() => handleContextItemClick(item)}
+                        >
                           <div className="flex items-start justify-between">
-                            <div>
-                              <h4 className="font-medium text-sm">{item.title}</h4>
-                              {item.description && (
-                                <p className="text-xs text-muted-foreground mt-1">{item.description}</p>
-                              )}
+                            <div className="flex gap-2">
+                              <div className="mt-0.5 text-primary">
+                                {getContextItemIcon(item.type)}
+                              </div>
+                              <div>
+                                <h4 className="font-medium text-sm">{item.title}</h4>
+                                {item.description && (
+                                  <p className="text-xs text-muted-foreground mt-1">{item.description}</p>
+                                )}
+                              </div>
                             </div>
                             <Badge variant="outline" className="text-xs">
                               {item.type}
@@ -334,219 +437,208 @@ const Assistant = () => {
                     <Separator />
                     
                     <div>
-                      <h4 className="text-sm font-medium mb-2">Command History</h4>
+                      <h4 className="text-sm font-medium mb-2">Recent Projects</h4>
                       <ul className="space-y-2">
-                        {commandHistory.map((item) => (
-                          <li 
-                            key={item.id} 
-                            className="text-xs flex justify-between p-2 rounded-md"
-                            onClick={() => handleHistoryClick(item.query)}
-                          >
-                            <span className="line-clamp-1">{item.query}</span>
-                            <span className="text-muted-foreground whitespace-nowrap ml-2">{formatRelativeTime(item.date)}</span>
-                          </li>
-                        ))}
+                        <li className="text-xs text-muted-foreground hover:text-foreground cursor-pointer p-2 hover:bg-accent/30 rounded-md flex items-center">
+                          <Briefcase className="h-3.5 w-3.5 mr-2 text-primary" />
+                          Website Redesign
+                        </li>
+                        <li className="text-xs text-muted-foreground hover:text-foreground cursor-pointer p-2 hover:bg-accent/30 rounded-md flex items-center">
+                          <Briefcase className="h-3.5 w-3.5 mr-2 text-primary" />
+                          Mobile App v2.0
+                        </li>
+                        <li className="text-xs text-muted-foreground hover:text-foreground cursor-pointer p-2 hover:bg-accent/30 rounded-md flex items-center">
+                          <Briefcase className="h-3.5 w-3.5 mr-2 text-primary" />
+                          Marketing Campaign
+                        </li>
+                      </ul>
+                    </div>
+                    
+                    <Separator />
+                    
+                    <div>
+                      <h4 className="text-sm font-medium mb-2">Upcoming Tasks</h4>
+                      <ul className="space-y-2">
+                        <li className="text-xs text-muted-foreground hover:text-foreground cursor-pointer p-2 hover:bg-accent/30 rounded-md flex items-center">
+                          <Calendar className="h-3.5 w-3.5 mr-2 text-primary" />
+                          Client Meeting - Tomorrow, 2:00 PM
+                        </li>
+                        <li className="text-xs text-muted-foreground hover:text-foreground cursor-pointer p-2 hover:bg-accent/30 rounded-md flex items-center">
+                          <CheckSquare className="h-3.5 w-3.5 mr-2 text-primary" />
+                          Complete Project Proposal - Due in 3 days
+                        </li>
                       </ul>
                     </div>
                   </div>
-                </DrawerContent>
-              </Drawer>
-            </div>
+                </ScrollArea>
+              </TabsContent>
+              
+              {/* History Tab Content */}
+              <TabsContent value="history" className="flex-1 overflow-hidden m-0 p-0">
+                <ScrollArea className="h-full px-6 py-4">
+                  <div className="space-y-4">
+                    <h3 className="text-sm font-medium">Previous Queries</h3>
+                    
+                    <div className="space-y-2">
+                      {commandHistory.map((item) => (
+                        <div 
+                          key={item.id} 
+                          className="p-3 border rounded-md hover:bg-accent/50 cursor-pointer transition-all"
+                          onClick={() => handleHistoryClick(item.query)}
+                        >
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-2">
+                              <Clock className="h-3.5 w-3.5 text-primary" />
+                              <span className="text-sm line-clamp-1">{item.query}</span>
+                            </div>
+                            <span className="text-xs text-muted-foreground whitespace-nowrap">
+                              {formatRelativeTime(item.date)}
+                            </span>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                    
+                    <Button variant="outline" size="sm" className="w-full text-xs">
+                      <History className="h-3.5 w-3.5 mr-2" />
+                      View All History
+                    </Button>
+                  </div>
+                </ScrollArea>
+              </TabsContent>
+              
+              {/* Templates Tab Content */}
+              <TabsContent value="templates" className="flex-1 overflow-hidden m-0 p-0">
+                <ScrollArea className="h-full px-6 py-4">
+                  <div className="space-y-4">
+                    <h3 className="text-sm font-medium">Response Templates</h3>
+                    <p className="text-xs text-muted-foreground">Quick-access tools to generate specific document types</p>
+                    
+                    <div className="grid grid-cols-1 gap-3">
+                      {templateItems.map((template) => (
+                        <div 
+                          key={template.id} 
+                          className="border rounded-lg p-3 hover:bg-accent/50 cursor-pointer transition-all"
+                          onClick={() => handleTemplateClick(template)}
+                        >
+                          <div className="flex items-center space-x-3">
+                            <div className="bg-primary/10 rounded-full p-2">
+                              {template.icon}
+                            </div>
+                            <div>
+                              <h3 className="font-medium text-sm">{template.name}</h3>
+                              <p className="text-xs text-muted-foreground">{template.description}</p>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                      
+                      <div className="border border-dashed rounded-lg p-3 hover:bg-accent/10 cursor-pointer transition-all flex items-center justify-center">
+                        <div className="text-center">
+                          <Plus className="h-4 w-4 mx-auto mb-1 text-muted-foreground" />
+                          <p className="text-sm font-medium">Create Custom Template</p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </ScrollArea>
+              </TabsContent>
+            </Tabs>
           </div>
+        </ResizablePanel>
+      </ResizablePanelGroup>
+      
+      {/* Dialog for Template Preview or Context Item Details */}
+      <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+        <DialogContent className="sm:max-w-[600px] glass-panel">
+          <DialogHeader>
+            {selectedTemplate && (
+              <>
+                <DialogTitle className="flex items-center gap-2">
+                  <div className="bg-primary/10 p-2 rounded-full">
+                    {selectedTemplate.icon}
+                  </div>
+                  {selectedTemplate.name}
+                </DialogTitle>
+                <DialogDescription>{selectedTemplate.description}</DialogDescription>
+              </>
+            )}
+            {selectedContextItem && (
+              <>
+                <DialogTitle className="flex items-center gap-2">
+                  <div className="bg-primary/10 p-2 rounded-full">
+                    {getContextItemIcon(selectedContextItem.type)}
+                  </div>
+                  {selectedContextItem.title}
+                </DialogTitle>
+                <DialogDescription>
+                  <Badge variant="outline" className="text-xs mb-2">
+                    {selectedContextItem.type}
+                  </Badge>
+                  <p>{selectedContextItem.description}</p>
+                </DialogDescription>
+              </>
+            )}
+          </DialogHeader>
           
-          {/* Function Buttons */}
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 mb-4">
-            <Button variant="outline" className="justify-start">
-              <Sparkles className="mr-2 h-4 w-4" />
-              Generate Content
-            </Button>
-            <Button variant="outline" className="justify-start">
-              <BarChart3 className="mr-2 h-4 w-4" />
-              Analyze Data
-            </Button>
-            <Button variant="outline" className="justify-start">
-              <FileText className="mr-2 h-4 w-4" />
-              Summarize Document
-            </Button>
-            <Button variant="outline" className="justify-start">
-              <LayoutList className="mr-2 h-4 w-4" />
-              Create List
-            </Button>
-          </div>
-          
-          {/* Tabs for Templates and Chat */}
-          <Tabs defaultValue="chat" className="flex-1 flex flex-col">
-            <TabsList className="mb-2">
-              <TabsTrigger value="chat">Chat</TabsTrigger>
-              <TabsTrigger value="templates">Templates</TabsTrigger>
-            </TabsList>
-            
-            <TabsContent value="chat" className="flex-1 flex flex-col">
-              <Card className="flex-1 flex flex-col mb-4 overflow-hidden">
-                <CardHeader className="pb-2">
-                  <CardTitle className="text-lg flex items-center">
-                    <Bot className="mr-2 h-5 w-5" />
-                    Intelligent Assistant
-                  </CardTitle>
-                  <CardDescription>
-                    Ask me anything about your projects, tasks, or request help with content generation.
-                  </CardDescription>
-                </CardHeader>
-                
-                {/* Suggestion Chips */}
-                <div className="px-4 pb-2 flex flex-wrap gap-2">
-                  {suggestionChips.map((chip) => (
-                    <Badge 
-                      key={chip.id} 
-                      variant="secondary" 
-                      className="cursor-pointer hover:bg-secondary/80"
-                      onClick={() => handleSuggestionClick(chip.text)}
-                    >
-                      {chip.text}
-                    </Badge>
-                  ))}
+          <div className="space-y-4">
+            {selectedTemplate && (
+              <>
+                <div className="bg-accent/30 p-4 rounded-md">
+                  <h3 className="text-sm font-medium mb-2">Preview</h3>
+                  <p className="text-sm text-muted-foreground">
+                    This is a preview of what will be generated. The actual content will be tailored to your specific needs.
+                  </p>
                 </div>
                 
-                <CardContent className="flex-1 overflow-y-auto px-4 py-0">
-                  <ScrollArea className="h-full pr-4">
-                    <div className="space-y-4">
-                      {messages.map((message) => (
-                        <div 
-                          key={message.id} 
-                          className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}
-                        >
-                          <div 
-                            className={`flex max-w-[80%] items-start gap-2 rounded-lg px-4 py-2 
-                              ${message.role === 'user' 
-                                ? 'bg-primary text-primary-foreground' 
-                                : 'bg-muted'}`}
-                          >
-                            {message.role === 'assistant' && (
-                              <Avatar className="h-8 w-8 mt-1 flex-shrink-0">
-                                <AvatarFallback>AI</AvatarFallback>
-                                <AvatarImage src="/placeholder.svg" alt="Foley AI" />
-                              </Avatar>
-                            )}
-                            <div>
-                              <p className="text-sm whitespace-pre-wrap">{message.content}</p>
-                              <p className="text-xs opacity-50 mt-1">
-                                {message.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                              </p>
-                            </div>
-                            {message.role === 'user' && (
-                              <User className="h-5 w-5 mt-1 flex-shrink-0" />
-                            )}
-                          </div>
-                        </div>
-                      ))}
-                      <div ref={messagesEndRef} />
-                    </div>
-                  </ScrollArea>
-                </CardContent>
-                
-                <CardFooter className="pt-4 pb-3 border-t">
-                  {/* Attachments */}
-                  {attachments.length > 0 && (
-                    <div className="mb-2 flex flex-wrap gap-2 w-full">
-                      {attachments.map((attachment, index) => (
-                        <Badge key={index} variant="secondary" className="pl-2 pr-1 py-1 flex items-center gap-1">
-                          <FileText className="h-3 w-3" />
-                          <span className="text-xs truncate max-w-[150px]">{attachment}</span>
-                          <Button 
-                            variant="ghost" 
-                            size="icon" 
-                            className="h-4 w-4 ml-1"
-                            onClick={() => handleRemoveAttachment(index)}
-                          >
-                            <X className="h-3 w-3" />
-                          </Button>
-                        </Badge>
-                      ))}
-                    </div>
-                  )}
-                
-                  <div className="flex w-full space-x-2">
-                    <Textarea 
-                      placeholder="Type your message here..."
-                      value={input}
-                      onChange={e => setInput(e.target.value)}
-                      onKeyDown={handleKeyDown}
-                      className="min-h-[60px]"
-                    />
-                    <div className="flex flex-col space-y-2">
-                      <TooltipProvider>
-                        <Tooltip>
-                          <TooltipTrigger asChild>
-                            <Button 
-                              onClick={() => fileInputRef.current?.click()} 
-                              size="icon" 
-                              variant="outline"
-                              className="h-[28px] w-[60px]"
-                            >
-                              <Upload className="h-4 w-4" />
-                              <input 
-                                type="file" 
-                                ref={fileInputRef} 
-                                onChange={handleFileUpload} 
-                                className="hidden" 
-                                multiple 
-                              />
-                            </Button>
-                          </TooltipTrigger>
-                          <TooltipContent>
-                            <p>Attach files</p>
-                          </TooltipContent>
-                        </Tooltip>
-                      </TooltipProvider>
-                      
-                      <Button onClick={handleSendMessage} size="icon" className="h-[28px] w-[60px]">
-                        <Send className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  </div>
-                </CardFooter>
-              </Card>
-            </TabsContent>
+                <div className="flex flex-col gap-2">
+                  <Button className="w-full">
+                    <Sparkles className="mr-2 h-4 w-4" />
+                    Generate {selectedTemplate.name}
+                  </Button>
+                  <Button variant="outline">
+                    <Copy className="mr-2 h-4 w-4" />
+                    Copy to Clipboard
+                  </Button>
+                </div>
+              </>
+            )}
             
-            <TabsContent value="templates" className="flex-1">
-              <Card className="mb-4">
-                <CardHeader>
-                  <CardTitle className="text-lg">Response Templates</CardTitle>
-                  <CardDescription>Quick-access tools to generate specific document types</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    {templateItems.map((template) => (
-                      <div 
-                        key={template.id} 
-                        className="border rounded-lg p-4 hover:bg-accent/50 cursor-pointer transition-all"
-                        onClick={() => handleTemplateClick(template)}
-                      >
-                        <div className="flex items-center space-x-3">
-                          <div className="bg-primary/10 rounded-full p-2">
-                            {template.icon}
-                          </div>
-                          <div>
-                            <h3 className="font-medium">{template.name}</h3>
-                            <p className="text-xs text-muted-foreground">{template.description}</p>
-                          </div>
-                        </div>
-                      </div>
-                    ))}
-                    
-                    <div className="border border-dashed rounded-lg p-4 hover:bg-accent/10 cursor-pointer transition-all flex items-center justify-center">
-                      <div className="text-center">
-                        <Plus className="h-5 w-5 mx-auto mb-1 text-muted-foreground" />
-                        <p className="text-sm font-medium">Create Custom Template</p>
-                      </div>
+            {selectedContextItem && (
+              <>
+                <div className="bg-accent/30 p-4 rounded-md">
+                  <h3 className="text-sm font-medium mb-2">Details</h3>
+                  <div className="space-y-2">
+                    <div className="flex justify-between text-sm">
+                      <span className="text-muted-foreground">Created:</span>
+                      <span>May 15, 2023</span>
+                    </div>
+                    <div className="flex justify-between text-sm">
+                      <span className="text-muted-foreground">Last Modified:</span>
+                      <span>June 2, 2023</span>
+                    </div>
+                    <div className="flex justify-between text-sm">
+                      <span className="text-muted-foreground">Owner:</span>
+                      <span>John Doe</span>
                     </div>
                   </div>
-                </CardContent>
-              </Card>
-            </TabsContent>
-          </Tabs>
-        </div>
-      </div>
+                </div>
+                
+                <div className="flex flex-col gap-2">
+                  <Button className="w-full">
+                    <MessageSquare className="mr-2 h-4 w-4" />
+                    Ask About This Item
+                  </Button>
+                  <Button variant="outline">
+                    <ExternalLink className="mr-2 h-4 w-4" />
+                    Open in Full View
+                  </Button>
+                </div>
+              </>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
