@@ -75,8 +75,8 @@ export default function Auth() {
       </div>
       
       <div className="w-full max-w-md mx-auto px-6 z-10">
-        {/* Auth Card - Enhanced glassmorphic effect */}
-        <div className="backdrop-blur-2xl bg-white/20 dark:bg-black/40 border border-white/30 dark:border-white/10 rounded-xl shadow-[0_8px_32px_rgba(0,0,0,0.15)] dark:shadow-[0_8px_32px_rgba(0,0,0,0.35)] p-8 animate-scale-in ring-1 ring-white/50 dark:ring-white/10">
+        {/* Auth Card - Enhanced glassmorphic effect with more transparency in dark mode */}
+        <div className="backdrop-blur-2xl bg-white/20 dark:bg-black/25 border border-white/30 dark:border-white/10 rounded-xl shadow-[0_8px_32px_rgba(0,0,0,0.15)] dark:shadow-[0_8px_32px_rgba(0,0,0,0.45)] p-8 animate-scale-in ring-1 ring-white/50 dark:ring-white/15">
           {/* Card Header */}
           <div className="text-center mb-8 animate-fade-in">
             <h1 className="text-3xl font-bold tracking-tight mb-2 text-foreground">
@@ -101,7 +101,7 @@ export default function Auth() {
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="name@example.com"
                   required
-                  className="w-full px-4 py-2 bg-white/15 dark:bg-white/5 backdrop-blur-md border border-white/30 dark:border-white/10 rounded-lg focus:ring-2 focus:ring-primary/50 text-foreground"
+                  className="w-full px-4 py-2 bg-white/15 dark:bg-black/30 backdrop-blur-md border border-white/30 dark:border-white/10 rounded-lg focus:ring-2 focus:ring-primary/50 text-foreground"
                 />
               </div>
             </div>
@@ -118,7 +118,7 @@ export default function Auth() {
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="••••••••"
                   required
-                  className="w-full px-4 py-2 bg-white/15 dark:bg-white/5 backdrop-blur-md border border-white/30 dark:border-white/10 rounded-lg pr-10 focus:ring-2 focus:ring-primary/50 text-foreground"
+                  className="w-full px-4 py-2 bg-white/15 dark:bg-black/30 backdrop-blur-md border border-white/30 dark:border-white/10 rounded-lg pr-10 focus:ring-2 focus:ring-primary/50 text-foreground"
                 />
                 <button
                   type="button"
