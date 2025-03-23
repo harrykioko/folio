@@ -1,16 +1,15 @@
 
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { ArrowRight } from 'lucide-react';
-import VerticalTag from '@/components/VerticalTag';
+import { ArrowRight, Terminal } from 'lucide-react';
 
-// Product verticals represented in the platform
-const verticals = [
-  { name: 'marketing', color: 'from-purple-600 to-indigo-600' },
-  { name: 'product', color: 'from-blue-600 to-sky-600' },
-  { name: 'finance', color: 'from-green-600 to-emerald-600' },
-  { name: 'design', color: 'from-orange-600 to-amber-600' },
-  { name: 'development', color: 'from-pink-600 to-rose-600' }
+// Command-style options representing product capabilities
+const commands = [
+  { name: 'launch_marketing', color: 'text-purple-400' },
+  { name: 'deploy_product', color: 'text-blue-400' },
+  { name: 'monitor_revenue', color: 'text-green-400' },
+  { name: 'iterate_design', color: 'text-orange-400' },
+  { name: 'ship_code', color: 'text-pink-400' }
 ];
 
 export default function HeroSection() {
@@ -57,16 +56,21 @@ export default function HeroSection() {
           </div>
         </div>
         
-        {/* Vertical tags showcase */}
+        {/* Terminal command console showcase */}
         <div 
           className={`flex flex-wrap justify-center gap-3 mt-10 transition-all duration-700 delay-400 ${
             isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
           }`}
         >
-          {verticals.map((vertical, index) => (
-            <div key={index} className="relative group cursor-pointer">
-              <VerticalTag vertical={vertical.name as any} className="text-sm px-3 py-1" />
-              <div className="absolute inset-0 bg-gradient-to-r opacity-0 group-hover:opacity-10 transition-opacity duration-300 rounded-full"></div>
+          {commands.map((command, index) => (
+            <div 
+              key={index} 
+              className="relative group cursor-pointer font-mono text-sm px-4 py-2 rounded bg-[#222222] text-gray-200 hover:bg-[#333333] transition-all duration-200 flex items-center"
+            >
+              <Terminal size={14} className="mr-1.5 opacity-70" />
+              <span className="text-gray-400 mr-1">&gt;</span>
+              <span className={`${command.color}`}>{command.name}</span>
+              <div className="absolute inset-0 bg-gradient-to-r opacity-0 group-hover:opacity-10 transition-opacity duration-300 rounded"></div>
             </div>
           ))}
         </div>
