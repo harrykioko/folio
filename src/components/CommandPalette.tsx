@@ -27,9 +27,9 @@ const CommandPalette: React.FC<CommandPaletteProps> = ({
 
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
-      <DialogContent className="sm:max-w-[550px] p-0">
-        <Command className="rounded-lg border shadow-md">
-          <div className="flex items-center border-b px-3">
+      <DialogContent className="sm:max-w-[550px] p-0 glass-panel border-none shadow-lg">
+        <Command className="rounded-lg backdrop-blur-xl bg-background/40 border-none">
+          <div className="flex items-center border-b px-3 border-border/20">
             <Search className="mr-2 h-4 w-4 shrink-0 opacity-50" />
             <Command.Input 
               placeholder="Type a command or search..." 
@@ -39,7 +39,7 @@ const CommandPalette: React.FC<CommandPaletteProps> = ({
           <Command.List className="max-h-[300px] overflow-y-auto overflow-x-hidden">
             <Command.Empty>No results found.</Command.Empty>
             
-            <Command.Group heading="Pages">
+            <Command.Group heading="Pages" className="px-2 py-1.5">
               {navItems.map((item) => (
                 <Command.Item
                   key={item.path}
@@ -47,7 +47,7 @@ const CommandPalette: React.FC<CommandPaletteProps> = ({
                     window.location.href = item.path;
                     setIsOpen(false);
                   }}
-                  className="flex items-center gap-2 px-2 py-1.5"
+                  className="flex items-center gap-2 px-2 py-1.5 rounded-md text-sm hover:bg-primary/10 aria-selected:bg-primary/10"
                 >
                   <item.icon className="h-4 w-4" />
                   <span>{item.name}</span>
@@ -55,13 +55,13 @@ const CommandPalette: React.FC<CommandPaletteProps> = ({
               ))}
             </Command.Group>
             
-            <Command.Group heading="Actions">
+            <Command.Group heading="Actions" className="px-2 py-1.5">
               <Command.Item
                 onSelect={() => {
                   window.location.href = '/tasks/new';
                   setIsOpen(false);
                 }}
-                className="flex items-center gap-2 px-2 py-1.5"
+                className="flex items-center gap-2 px-2 py-1.5 rounded-md text-sm hover:bg-primary/10 aria-selected:bg-primary/10"
               >
                 <CheckSquare className="h-4 w-4" />
                 <span>Create New Task</span>
@@ -71,7 +71,7 @@ const CommandPalette: React.FC<CommandPaletteProps> = ({
                   window.location.href = '/workspace/new';
                   setIsOpen(false);
                 }}
-                className="flex items-center gap-2 px-2 py-1.5"
+                className="flex items-center gap-2 px-2 py-1.5 rounded-md text-sm hover:bg-primary/10 aria-selected:bg-primary/10"
               >
                 <FolderKanban className="h-4 w-4" />
                 <span>Create New Document</span>
