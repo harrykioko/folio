@@ -18,7 +18,7 @@ export const navItems: NavItem[] = [
   { name: 'Assets', path: '/assets', icon: Database },
   { name: 'Tasks', path: '/tasks', icon: CheckSquare },
   { name: 'Analytics', path: '/analytics', icon: BarChart3 },
-  { name: 'AI Assistant', path: '/assistant', icon: Bot },
+  { name: 'Foley', path: '/assistant', icon: Bot },
   { name: 'Settings', path: '/settings', icon: Settings },
 ];
 
