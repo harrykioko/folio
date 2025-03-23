@@ -39,26 +39,24 @@ export default function QuotesCarousel() {
   }, []);
   
   return (
-    <section className="relative z-10 px-4 py-12">
+    <section className="relative z-10 px-4 py-8">
       <div className="container mx-auto max-w-screen-lg">
-        <div className="h-24 relative overflow-hidden">
+        <div className="h-20 relative overflow-hidden">
           <AnimatePresence mode="wait">
             <motion.div
               key={activeIndex}
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -20 }}
-              transition={{ duration: 1.5, ease: "easeInOut" }}
+              transition={{ duration: 1.2, ease: "easeInOut" }}
               className="absolute inset-0 flex items-center justify-center"
             >
               <blockquote className="text-center">
-                <p className="text-lg md:text-xl font-serif italic mb-3 text-foreground/90 tracking-wide">
+                <p className="text-lg md:text-xl font-serif italic mb-2 text-foreground/80">
                   "{inspirationalQuotes[activeIndex].quote}"
                 </p>
-                <footer className="text-sm text-muted-foreground flex items-center justify-center space-x-2">
-                  <span className="h-px w-4 bg-muted-foreground/30"></span>
-                  <span>— {inspirationalQuotes[activeIndex].author}</span>
-                  <span className="h-px w-4 bg-muted-foreground/30"></span>
+                <footer className="text-sm text-muted-foreground">
+                  — {inspirationalQuotes[activeIndex].author}
                 </footer>
               </blockquote>
             </motion.div>
