@@ -1,238 +1,507 @@
 
-import { useState, useEffect } from 'react';
-import { Plus, Search, Filter, Grid, List, SortAsc, SortDesc } from 'lucide-react';
-import Header from '../components/Header';
-import ProjectCard from '../components/ProjectCard';
+import React, { useState } from 'react';
+import { 
+  Clock, 
+  Edit3, 
+  File, 
+  FileText, 
+  Filter, 
+  FolderKanban, 
+  Grid, 
+  Image as ImageIcon, 
+  List, 
+  MoreHorizontal, 
+  Plus, 
+  Search, 
+  Share2, 
+  Star, 
+  Users 
+} from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { 
+  DropdownMenu, 
+  DropdownMenuContent, 
+  DropdownMenuItem, 
+  DropdownMenuSeparator, 
+  DropdownMenuTrigger 
+} from '@/components/ui/dropdown-menu';
+import { 
+  ResizableHandle, 
+  ResizablePanel, 
+  ResizablePanelGroup 
+} from '@/components/ui/resizable';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
-export default function Workspace() {
-  const [isLoaded, setIsLoaded] = useState(false);
+interface Document {
+  id: string;
+  title: string;
+  type: 'doc' | 'spreadsheet' | 'presentation' | 'image' | 'folder';
+  lastEdited: string;
+  collaborators: number;
+  isFavorite: boolean;
+  tags?: string[];
+}
+
+const Workspace = () => {
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
-  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
+  const [searchTerm, setSearchTerm] = useState('');
+  const [activeTab, setActiveTab] = useState('recent');
   
-  useEffect(() => {
-    // Simulate loading delay for animation
-    const timer = setTimeout(() => {
-      setIsLoaded(true);
-    }, 100);
-    return () => clearTimeout(timer);
-  }, []);
-  
-  // Sample projects data
-  const projects = [
+  // Sample documents data
+  const documents: Document[] = [
     {
-      title: 'Dashboard Redesign',
-      description: 'Improving user experience and adding new analytics features',
-      progress: 75,
-      dueDate: 'Oct 15, 2023',
-      members: 4,
-      tasks: { completed: 16, total: 20 }
+      id: '1',
+      title: 'Q3 Marketing Strategy',
+      type: 'doc',
+      lastEdited: '2 hours ago',
+      collaborators: 5,
+      isFavorite: true,
+      tags: ['Marketing', 'Strategy']
     },
     {
-      title: 'API Integration',
-      description: 'Connecting with payment gateways and external services',
-      progress: 45,
-      dueDate: 'Nov 3, 2023',
-      members: 2,
-      tasks: { completed: 7, total: 12 }
+      id: '2',
+      title: 'Product Roadmap 2023-2024',
+      type: 'spreadsheet',
+      lastEdited: '1 day ago',
+      collaborators: 8,
+      isFavorite: true,
+      tags: ['Product', 'Planning']
     },
     {
-      title: 'Marketing Website',
-      description: 'Creating new landing pages for product launch',
-      progress: 30,
-      dueDate: 'Nov 10, 2023',
-      members: 3,
-      tasks: { completed: 5, total: 14 }
+      id: '3',
+      title: 'Investor Presentation',
+      type: 'presentation',
+      lastEdited: '3 days ago',
+      collaborators: 3,
+      isFavorite: false,
+      tags: ['Finance', 'Presentation']
     },
     {
-      title: 'Mobile Application',
-      description: 'Developing the iOS and Android companion app',
-      progress: 60,
-      dueDate: 'Dec 5, 2023',
-      members: 5,
-      tasks: { completed: 24, total: 36 }
+      id: '4',
+      title: 'Brand Guidelines',
+      type: 'doc',
+      lastEdited: '1 week ago',
+      collaborators: 2,
+      isFavorite: false,
+      tags: ['Design', 'Brand']
     },
     {
-      title: 'Documentation',
-      description: 'Creating comprehensive user documentation and guides',
-      progress: 90,
-      dueDate: 'Oct 22, 2023',
-      members: 2,
-      tasks: { completed: 18, total: 20 }
+      id: '5',
+      title: 'Project Timeline',
+      type: 'spreadsheet',
+      lastEdited: '5 days ago',
+      collaborators: 6,
+      isFavorite: true,
+      tags: ['Project', 'Planning']
     },
     {
-      title: 'AI Integration',
-      description: 'Adding intelligent features using OpenAI API',
-      progress: 15,
-      dueDate: 'Jan 15, 2024',
-      members: 3,
-      tasks: { completed: 3, total: 18 }
-    }
+      id: '6',
+      title: 'Team Meeting Notes',
+      type: 'doc',
+      lastEdited: '2 days ago',
+      collaborators: 10,
+      isFavorite: false,
+      tags: ['Team', 'Meeting']
+    },
+    {
+      id: '7',
+      title: 'Competitive Analysis',
+      type: 'spreadsheet',
+      lastEdited: '4 days ago',
+      collaborators: 4,
+      isFavorite: false,
+      tags: ['Research', 'Strategy']
+    },
+    {
+      id: '8',
+      title: 'Website Mockups',
+      type: 'image',
+      lastEdited: '6 days ago',
+      collaborators: 3,
+      isFavorite: true,
+      tags: ['Design', 'Website']
+    },
+    {
+      id: '9',
+      title: 'Design Assets',
+      type: 'folder',
+      lastEdited: '1 week ago',
+      collaborators: 5,
+      isFavorite: false,
+      tags: ['Design', 'Assets']
+    },
   ];
-  
-  // Sort projects based on current sort order
-  const sortedProjects = [...projects].sort((a, b) => {
-    return sortOrder === 'asc' 
-      ? a.progress - b.progress 
-      : b.progress - a.progress;
+
+  // Filter documents based on search term and active tab
+  const filteredDocuments = documents.filter(doc => {
+    const matchesSearch = doc.title.toLowerCase().includes(searchTerm.toLowerCase());
+    
+    if (activeTab === 'recent') return matchesSearch;
+    if (activeTab === 'starred') return matchesSearch && doc.isFavorite;
+    if (activeTab === 'docs') return matchesSearch && doc.type === 'doc';
+    if (activeTab === 'spreadsheets') return matchesSearch && doc.type === 'spreadsheet';
+    
+    return matchesSearch;
   });
-  
-  // Animation classes
-  const getAnimationClass = (index: number) => {
-    return isLoaded 
-      ? `opacity-100 translate-y-0 transition-all duration-500 delay-${index * 50}`
-      : 'opacity-0 translate-y-8';
+
+  // Helper to get icon by document type
+  const getDocumentIcon = (type: Document['type']) => {
+    switch(type) {
+      case 'doc': return <FileText className="h-5 w-5" />;
+      case 'spreadsheet': return <Grid className="h-5 w-5" />;
+      case 'presentation': return <List className="h-5 w-5" />;
+      case 'image': return <ImageIcon className="h-5 w-5" />;
+      case 'folder': return <FolderKanban className="h-5 w-5" />;
+      default: return <File className="h-5 w-5" />;
+    }
   };
-  
+
   return (
-    <div className="min-h-screen bg-background">
-      <Header />
-      
-      <main className="pt-24 pb-16 px-4 md:px-6">
-        <div className="container mx-auto max-w-screen-xl">
-          {/* Header section */}
-          <section className={`mb-8 ${isLoaded ? 'animate-fade-in' : 'opacity-0'}`}>
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-              <div>
-                <h1 className="text-3xl font-bold tracking-tight mb-2">Workspace</h1>
-                <p className="text-muted-foreground">
-                  Manage your active projects and collaborations.
-                </p>
-              </div>
-              <button className="sm:self-start flex items-center space-x-2 py-2.5 px-4 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors">
-                <Plus className="h-5 w-5" />
-                <span>New Project</span>
-              </button>
-            </div>
-          </section>
-          
-          {/* Search and filters */}
-          <section className={`mb-6 ${getAnimationClass(1)}`}>
-            <div className="flex flex-col sm:flex-row gap-4">
-              <div className="relative flex-grow">
+    <div className="container px-4 md:px-6 h-[calc(100vh-7rem)]">
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6">
+        <div>
+          <h1 className="text-2xl font-semibold">Workspace Hub</h1>
+          <p className="text-muted-foreground">
+            Create, collaborate, and manage your documents
+          </p>
+        </div>
+        <div className="mt-4 md:mt-0">
+          <Button>
+            <Plus className="w-4 h-4 mr-2" />
+            New Document
+          </Button>
+        </div>
+      </div>
+
+      <ResizablePanelGroup direction="horizontal" className="min-h-[600px] rounded-lg border">
+        {/* Navigation sidebar */}
+        <ResizablePanel defaultSize={25} minSize={15} maxSize={30}>
+          <div className="h-full p-4 flex flex-col">
+            <div className="mb-6">
+              <div className="relative">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <input
-                  type="text"
-                  placeholder="Search projects..."
-                  className="w-full pl-10 pr-4 py-2.5 rounded-lg border border-input bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary transition-all"
+                <Input
+                  placeholder="Search documents..."
+                  className="pl-10"
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
                 />
               </div>
-              
-              <div className="flex space-x-2">
-                <button className="p-2.5 border border-input rounded-lg hover:bg-accent transition-colors">
-                  <Filter className="h-5 w-5 text-muted-foreground" />
-                </button>
-                
-                <button 
-                  className={`p-2.5 border rounded-lg transition-colors ${
-                    viewMode === 'grid' 
-                      ? 'bg-accent border-primary text-foreground' 
-                      : 'border-input hover:bg-accent text-muted-foreground'
-                  }`}
-                  onClick={() => setViewMode('grid')}
-                >
-                  <Grid className="h-5 w-5" />
-                </button>
-                
-                <button 
-                  className={`p-2.5 border rounded-lg transition-colors ${
-                    viewMode === 'list' 
-                      ? 'bg-accent border-primary text-foreground' 
-                      : 'border-input hover:bg-accent text-muted-foreground'
-                  }`}
-                  onClick={() => setViewMode('list')}
-                >
-                  <List className="h-5 w-5" />
-                </button>
-                
-                <button 
-                  className="p-2.5 border border-input rounded-lg hover:bg-accent transition-colors"
-                  onClick={() => setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc')}
-                >
-                  {sortOrder === 'asc' 
-                    ? <SortAsc className="h-5 w-5 text-muted-foreground" />
-                    : <SortDesc className="h-5 w-5 text-muted-foreground" />
-                  }
-                </button>
+            </div>
+            
+            <div className="mb-6">
+              <h3 className="text-sm font-medium mb-2">Workspaces</h3>
+              <div className="space-y-1">
+                <Button variant="ghost" className="w-full justify-start">
+                  <FolderKanban className="mr-2 h-4 w-4" />
+                  Personal
+                </Button>
+                <Button variant="ghost" className="w-full justify-start">
+                  <FolderKanban className="mr-2 h-4 w-4" />
+                  Team
+                </Button>
+                <Button variant="ghost" className="w-full justify-start">
+                  <FolderKanban className="mr-2 h-4 w-4" />
+                  Projects
+                </Button>
+                <Button variant="ghost" className="w-full justify-start">
+                  <Plus className="mr-2 h-4 w-4" />
+                  Add Workspace
+                </Button>
               </div>
             </div>
-          </section>
-          
-          {/* Projects grid */}
-          <section>
-            {viewMode === 'grid' ? (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {sortedProjects.map((project, index) => (
-                  <div key={index} className={getAnimationClass(index + 2)}>
-                    <ProjectCard {...project} />
-                  </div>
-                ))}
-                
-                {/* Add project card */}
-                <div className={getAnimationClass(sortedProjects.length + 2)}>
-                  <div className="bg-card rounded-xl border border-dashed border-border h-full flex flex-col items-center justify-center p-6 transition-all duration-300 hover:border-muted-foreground hover:bg-accent/50 cursor-pointer">
-                    <div className="w-12 h-12 rounded-full bg-accent flex items-center justify-center mb-3">
-                      <Plus className="h-6 w-6 text-muted-foreground" />
-                    </div>
-                    <p className="text-muted-foreground font-medium">Add New Project</p>
-                  </div>
-                </div>
+            
+            <h3 className="text-sm font-medium mb-2">Views</h3>
+            <div className="space-y-1">
+              <Button 
+                variant={activeTab === 'recent' ? 'default' : 'ghost'} 
+                className="w-full justify-start"
+                onClick={() => setActiveTab('recent')}
+              >
+                <Clock className="mr-2 h-4 w-4" />
+                Recent
+              </Button>
+              <Button 
+                variant={activeTab === 'starred' ? 'default' : 'ghost'} 
+                className="w-full justify-start"
+                onClick={() => setActiveTab('starred')}
+              >
+                <Star className="mr-2 h-4 w-4" />
+                Starred
+              </Button>
+              <Button 
+                variant={activeTab === 'shared' ? 'default' : 'ghost'} 
+                className="w-full justify-start"
+                onClick={() => setActiveTab('shared')}
+              >
+                <Users className="mr-2 h-4 w-4" />
+                Shared with me
+              </Button>
+              <Button 
+                variant={activeTab === 'docs' ? 'default' : 'ghost'} 
+                className="w-full justify-start"
+                onClick={() => setActiveTab('docs')}
+              >
+                <FileText className="mr-2 h-4 w-4" />
+                Documents
+              </Button>
+              <Button 
+                variant={activeTab === 'spreadsheets' ? 'default' : 'ghost'} 
+                className="w-full justify-start"
+                onClick={() => setActiveTab('spreadsheets')}
+              >
+                <Grid className="mr-2 h-4 w-4" />
+                Spreadsheets
+              </Button>
+            </div>
+            
+            <div className="mt-auto pt-6">
+              <Button variant="outline" className="w-full">
+                <Plus className="mr-2 h-4 w-4" />
+                Upload Files
+              </Button>
+            </div>
+          </div>
+        </ResizablePanel>
+
+        <ResizableHandle withHandle />
+
+        {/* Content area */}
+        <ResizablePanel defaultSize={75}>
+          <div className="h-full flex flex-col">
+            <div className="flex justify-between items-center border-b p-4">
+              <h2 className="text-lg font-medium capitalize">
+                {activeTab === 'recent' ? 'Recent Documents' :
+                 activeTab === 'starred' ? 'Starred Documents' :
+                 activeTab === 'shared' ? 'Shared with Me' :
+                 activeTab === 'docs' ? 'Documents' :
+                 activeTab === 'spreadsheets' ? 'Spreadsheets' : 'All Documents'}
+              </h2>
+              <div className="flex items-center space-x-2">
+                <Button 
+                  variant={viewMode === 'grid' ? 'default' : 'outline'} 
+                  size="icon" 
+                  className="h-8 w-8"
+                  onClick={() => setViewMode('grid')}
+                >
+                  <Grid className="h-4 w-4" />
+                </Button>
+                <Button 
+                  variant={viewMode === 'list' ? 'default' : 'outline'} 
+                  size="icon" 
+                  className="h-8 w-8"
+                  onClick={() => setViewMode('list')}
+                >
+                  <List className="h-4 w-4" />
+                </Button>
+                <Button variant="outline" size="icon" className="h-8 w-8">
+                  <Filter className="h-4 w-4" />
+                </Button>
               </div>
-            ) : (
-              <div className="space-y-3">
-                {sortedProjects.map((project, index) => (
-                  <div 
-                    key={index} 
-                    className={`bg-card rounded-xl border border-border p-4 transition-all hover:shadow-sm ${getAnimationClass(index + 2)}`}
-                  >
-                    <div className="flex flex-col md:flex-row md:items-center gap-4">
-                      <div className="flex-grow">
-                        <h3 className="text-lg font-semibold">{project.title}</h3>
-                        <p className="text-sm text-muted-foreground">{project.description}</p>
-                      </div>
-                      
-                      <div className="flex items-center gap-6">
-                        <div>
-                          <div className="text-xs text-muted-foreground mb-1">Progress</div>
-                          <div className="w-32 h-2 bg-accent rounded-full overflow-hidden">
-                            <div 
-                              className={`h-full ${
-                                project.progress >= 75 ? 'bg-green-500' :
-                                project.progress >= 50 ? 'bg-blue-500' :
-                                project.progress >= 25 ? 'bg-yellow-500' : 'bg-red-500'
-                              }`} 
-                              style={{ width: `${project.progress}%` }}
-                            />
+            </div>
+            
+            <ScrollArea className="flex-1 p-4">
+              {viewMode === 'grid' ? (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {filteredDocuments.map((doc) => (
+                    <Card key={doc.id} className="overflow-hidden cursor-pointer hover:shadow-md transition-shadow">
+                      <CardContent className="p-0">
+                        {/* Document preview area */}
+                        <div className={`h-32 ${
+                          doc.type === 'doc' ? 'bg-blue-50' :
+                          doc.type === 'spreadsheet' ? 'bg-green-50' :
+                          doc.type === 'presentation' ? 'bg-amber-50' :
+                          doc.type === 'image' ? 'bg-purple-50' :
+                          'bg-gray-50'
+                        } flex items-center justify-center`}>
+                          <div className={`w-16 h-16 rounded-lg ${
+                            doc.type === 'doc' ? 'bg-blue-100 text-blue-600' :
+                            doc.type === 'spreadsheet' ? 'bg-green-100 text-green-600' :
+                            doc.type === 'presentation' ? 'bg-amber-100 text-amber-600' :
+                            doc.type === 'image' ? 'bg-purple-100 text-purple-600' :
+                            doc.type === 'folder' ? 'bg-gray-100 text-gray-600' : ''
+                          } flex items-center justify-center`}>
+                            {getDocumentIcon(doc.type)}
                           </div>
                         </div>
                         
-                        <div className="text-center">
-                          <div className="text-xs text-muted-foreground mb-1">Due Date</div>
-                          <div className="text-sm font-medium">{project.dueDate}</div>
-                        </div>
-                        
-                        <div className="text-center">
-                          <div className="text-xs text-muted-foreground mb-1">Tasks</div>
-                          <div className="text-sm font-medium">
-                            {project.tasks.completed}/{project.tasks.total}
+                        {/* Document details */}
+                        <div className="p-4">
+                          <div className="flex justify-between items-start mb-3">
+                            <div>
+                              <h3 className="font-medium">{doc.title}</h3>
+                              <div className="flex items-center text-xs text-muted-foreground">
+                                <Clock className="w-3 h-3 mr-1" />
+                                <span>Edited {doc.lastEdited}</span>
+                              </div>
+                            </div>
+                            <div className="flex space-x-1">
+                              <Button 
+                                variant="ghost" 
+                                size="icon" 
+                                className="h-7 w-7"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  // Toggle favorite logic would go here
+                                }}
+                              >
+                                <Star className="h-4 w-4" fill={doc.isFavorite ? "currentColor" : "none"} />
+                              </Button>
+                              <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
+                                  <Button variant="ghost" size="icon" className="h-7 w-7">
+                                    <MoreHorizontal className="h-4 w-4" />
+                                  </Button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent align="end">
+                                  <DropdownMenuItem>
+                                    <Edit3 className="h-4 w-4 mr-2" />
+                                    Open
+                                  </DropdownMenuItem>
+                                  <DropdownMenuItem>
+                                    <Share2 className="h-4 w-4 mr-2" />
+                                    Share
+                                  </DropdownMenuItem>
+                                  <DropdownMenuSeparator />
+                                  <DropdownMenuItem className="text-red-500">
+                                    Delete
+                                  </DropdownMenuItem>
+                                </DropdownMenuContent>
+                              </DropdownMenu>
+                            </div>
+                          </div>
+                          
+                          {/* Tags */}
+                          {doc.tags && doc.tags.length > 0 && (
+                            <div className="flex flex-wrap gap-1 mb-3">
+                              {doc.tags.map((tag) => (
+                                <span key={tag} className="text-xs bg-accent px-2 py-0.5 rounded">
+                                  {tag}
+                                </span>
+                              ))}
+                            </div>
+                          )}
+                          
+                          {/* Collaborators */}
+                          <div className="flex items-center justify-between">
+                            <div className="flex -space-x-2">
+                              {Array.from({ length: Math.min(3, doc.collaborators) }).map((_, i) => (
+                                <div 
+                                  key={i} 
+                                  className="w-6 h-6 rounded-full bg-accent flex items-center justify-center text-xs border-2 border-background"
+                                >
+                                  {['A', 'B', 'C'][i]}
+                                </div>
+                              ))}
+                              {doc.collaborators > 3 && (
+                                <div className="w-6 h-6 rounded-full bg-muted flex items-center justify-center text-xs border-2 border-background">
+                                  +{doc.collaborators - 3}
+                                </div>
+                              )}
+                            </div>
+                            
+                            <Button variant="ghost" size="sm" className="h-7">
+                              <Edit3 className="h-3 w-3 mr-1" />
+                              Edit
+                            </Button>
                           </div>
                         </div>
-                      </div>
-                    </div>
-                  </div>
-                ))}
-                
-                {/* Add project in list view */}
-                <div className={getAnimationClass(sortedProjects.length + 2)}>
-                  <div className="bg-card rounded-xl border border-dashed border-border p-4 flex items-center justify-center h-16 transition-all duration-300 hover:border-muted-foreground hover:bg-accent/50 cursor-pointer">
-                    <Plus className="h-5 w-5 mr-2 text-muted-foreground" />
-                    <p className="text-muted-foreground font-medium">Add New Project</p>
-                  </div>
+                      </CardContent>
+                    </Card>
+                  ))}
                 </div>
-              </div>
-            )}
-          </section>
-        </div>
-      </main>
+              ) : (
+                <div className="space-y-2">
+                  {filteredDocuments.map((doc) => (
+                    <Card 
+                      key={doc.id} 
+                      className="cursor-pointer hover:shadow-sm transition-shadow"
+                    >
+                      <CardContent className="p-3">
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center">
+                            <div className={`w-10 h-10 rounded-lg ${
+                              doc.type === 'doc' ? 'bg-blue-100 text-blue-600' :
+                              doc.type === 'spreadsheet' ? 'bg-green-100 text-green-600' :
+                              doc.type === 'presentation' ? 'bg-amber-100 text-amber-600' :
+                              doc.type === 'image' ? 'bg-purple-100 text-purple-600' :
+                              doc.type === 'folder' ? 'bg-gray-100 text-gray-600' : ''
+                            } flex items-center justify-center mr-4`}>
+                              {getDocumentIcon(doc.type)}
+                            </div>
+                            <div>
+                              <h3 className="font-medium">{doc.title}</h3>
+                              <div className="flex items-center text-xs text-muted-foreground">
+                                <Clock className="w-3 h-3 mr-1" />
+                                <span>Edited {doc.lastEdited}</span>
+                                {doc.tags && doc.tags.length > 0 && (
+                                  <>
+                                    <span className="mx-2">•</span>
+                                    <span>{doc.tags.join(', ')}</span>
+                                  </>
+                                )}
+                              </div>
+                            </div>
+                          </div>
+                          <div className="flex items-center space-x-4">
+                            <div className="flex -space-x-2">
+                              {Array.from({ length: Math.min(3, doc.collaborators) }).map((_, i) => (
+                                <div 
+                                  key={i} 
+                                  className="w-6 h-6 rounded-full bg-accent flex items-center justify-center text-xs border-2 border-background"
+                                >
+                                  {['A', 'B', 'C'][i]}
+                                </div>
+                              ))}
+                              {doc.collaborators > 3 && (
+                                <div className="w-6 h-6 rounded-full bg-muted flex items-center justify-center text-xs border-2 border-background">
+                                  +{doc.collaborators - 3}
+                                </div>
+                              )}
+                            </div>
+                            <Button 
+                              variant="ghost" 
+                              size="icon" 
+                              className="h-8 w-8"
+                            >
+                              <Star className="h-4 w-4" fill={doc.isFavorite ? "currentColor" : "none"} />
+                            </Button>
+                            <Button variant="ghost" size="sm">
+                              <Edit3 className="h-4 w-4 mr-1" />
+                              Edit
+                            </Button>
+                            <DropdownMenu>
+                              <DropdownMenuTrigger asChild>
+                                <Button variant="ghost" size="icon" className="h-8 w-8">
+                                  <MoreHorizontal className="h-4 w-4" />
+                                </Button>
+                              </DropdownMenuTrigger>
+                              <DropdownMenuContent align="end">
+                                <DropdownMenuItem>
+                                  <Share2 className="h-4 w-4 mr-2" />
+                                  Share
+                                </DropdownMenuItem>
+                                <DropdownMenuItem className="text-red-500">
+                                  Delete
+                                </DropdownMenuItem>
+                              </DropdownMenuContent>
+                            </DropdownMenu>
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+              )}
+            </ScrollArea>
+          </div>
+        </ResizablePanel>
+      </ResizablePanelGroup>
     </div>
   );
-}
+};
+
+export default Workspace;
