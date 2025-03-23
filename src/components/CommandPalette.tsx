@@ -125,63 +125,68 @@ const CommandPalette: React.FC<CommandPaletteProps> = ({
                   </Command.Item>
                 </Command.Group>
               </>
-            ) : (
+            ) : results.length > 0 ? (
               <>
-                {results.length > 0 ? (
-                  Object.keys(groupedResults).map((category) => (
-                    <Command.Group 
-                      key={category} 
-                      heading={categoryTitles[category] || category}
-                      className="px-2 py-1.5"
-                    >
-                      {groupedResults[category].map((result) => (
-                        <Command.Item
-                          key={result.id}
-                          onSelect={() => handleNavigate(result.url)}
-                          className="flex items-start gap-2 px-2 py-2 rounded-md text-sm hover:bg-primary/10 aria-selected:bg-primary/10"
-                        >
-                          <div className="flex items-center gap-2 flex-1">
-                            <div className="mt-0.5">
-                              {categoryIcons[category]}
-                            </div>
-                            <div className="flex flex-col flex-1">
-                              <div className="flex items-center justify-between">
-                                <span className="font-medium">{result.title}</span>
-                                <ArrowRight className="h-3 w-3 opacity-50" />
-                              </div>
-                              {result.description && (
-                                <span className="text-xs text-muted-foreground">{result.description}</span>
-                              )}
-                              {result.tags && result.tags.length > 0 && (
-                                <div className="flex gap-1 mt-1 flex-wrap">
-                                  {result.tags.map((tag) => (
-                                    <Badge key={tag} variant="outline" className="px-1 py-0 text-[10px]">
-                                      {tag}
-                                    </Badge>
-                                  ))}
-                                </div>
-                              )}
-                            </div>
+                {Object.keys(groupedResults).map((category) => (
+                  <Command.Group 
+                    key={category} 
+                    heading={categoryTitles[category] || category}
+                    className="px-2 py-1.5"
+                  >
+                    {groupedResults[category].map((result) => (
+                      <Command.Item
+                        key={result.id}
+                        onSelect={() => handleNavigate(result.url)}
+                        className="flex items-start gap-2 px-3 py-3 rounded-md text-sm hover:bg-primary/10 aria-selected:bg-primary/10"
+                        value={`${result.title} ${result.description || ''} ${result.tags?.join(' ') || ''}`}
+                      >
+                        <div className="flex items-start gap-3 w-full">
+                          <div className={`mt-0.5 flex-shrink-0 w-8 h-8 rounded flex items-center justify-center ${
+                            category === 'document' ? 'bg-blue-100 text-blue-700' :
+                            category === 'task' ? 'bg-amber-100 text-amber-700' :
+                            category === 'asset' ? 'bg-purple-100 text-purple-700' :
+                            category === 'project' ? 'bg-green-100 text-green-700' :
+                            'bg-gray-100 text-gray-700'
+                          }`}>
+                            {categoryIcons[category]}
                           </div>
-                        </Command.Item>
-                      ))}
-                    </Command.Group>
-                  ))
-                ) : (
-                  <Command.Empty>
-                    <div className="flex flex-col items-center justify-center p-4 text-center">
-                      <p className="text-sm text-muted-foreground">No results found.</p>
-                      <p className="text-xs text-muted-foreground mt-1">Try searching for something else.</p>
-                    </div>
-                  </Command.Empty>
-                )}
-                
-                {results.length > 0 && (
-                  <div className="px-4 py-2 text-xs text-center text-muted-foreground border-t border-border/20 mt-2">
-                    Press <kbd className="px-1 bg-muted rounded">Enter</kbd> to navigate to the selected result
-                  </div>
-                )}
+                          <div className="flex flex-col flex-1 min-w-0">
+                            <div className="flex items-center justify-between w-full">
+                              <span className="font-medium">{result.title}</span>
+                              <ArrowRight className="h-3 w-3 opacity-50 flex-shrink-0 ml-2" />
+                            </div>
+                            {result.description && (
+                              <span className="text-xs text-muted-foreground line-clamp-2 mt-0.5">{result.description}</span>
+                            )}
+                            {result.lastModified && (
+                              <span className="text-xs text-muted-foreground mt-1">Updated {result.lastModified}</span>
+                            )}
+                            {result.tags && result.tags.length > 0 && (
+                              <div className="flex gap-1 mt-1.5 flex-wrap">
+                                {result.tags.map((tag) => (
+                                  <Badge key={tag} variant="outline" className="px-1.5 py-0 text-[10px] bg-background/80">
+                                    {tag}
+                                  </Badge>
+                                ))}
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      </Command.Item>
+                    ))}
+                  </Command.Group>
+                ))}
+                <div className="px-4 py-2 text-xs text-center text-muted-foreground border-t border-border/20 mt-2">
+                  Press <kbd className="px-1 bg-muted rounded">Enter</kbd> to navigate to the selected result
+                </div>
               </>
+            ) : (
+              <Command.Empty>
+                <div className="flex flex-col items-center justify-center p-6 text-center">
+                  <p className="text-sm text-muted-foreground">No results found for "{searchQuery}"</p>
+                  <p className="text-xs text-muted-foreground mt-1">Try searching with different keywords</p>
+                </div>
+              </Command.Empty>
             )}
           </Command.List>
         </Command>
