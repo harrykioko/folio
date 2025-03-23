@@ -14,7 +14,7 @@ export default function LandingHeader() {
             <ThemeToggle />
             <Link 
               to="/auth" 
-              className="py-2.5 px-5 rounded-lg bg-primary text-primary-foreground font-medium hover:bg-primary/90 transition-colors"
+              className="py-2.5 px-5 rounded-md bg-background/15 backdrop-blur-md border border-white/30 text-foreground font-medium transition-all duration-300 hover:bg-background/20 hover:text-white hover:shadow-[0_0_10px_rgba(255,255,255,0.15)]"
             >
               Sign In
             </Link>

@@ -5,11 +5,11 @@ import { ArrowRight, Terminal } from 'lucide-react';
 
 // Command-style options representing product capabilities
 const commands = [
-  { name: 'launch_marketing', color: 'text-purple-400' },
-  { name: 'deploy_product', color: 'text-blue-400' },
-  { name: 'monitor_revenue', color: 'text-green-400' },
-  { name: 'iterate_design', color: 'text-orange-400' },
-  { name: 'ship_code', color: 'text-pink-400' }
+  { name: 'launch_marketing', color: 'text-[#b967ff]' },
+  { name: 'deploy_product', color: 'text-[#3a86ff]' },
+  { name: 'monitor_revenue', color: 'text-[#2ecc71]' },
+  { name: 'iterate_design', color: 'text-[#ff9f1c]' },
+  { name: 'ship_code', color: 'text-[#ff5757]' }
 ];
 
 export default function HeroSection() {
@@ -48,7 +48,7 @@ export default function HeroSection() {
           >
             <Link 
               to="/auth?signup=true" 
-              className="py-3 px-6 rounded-lg bg-primary text-primary-foreground font-medium flex items-center justify-center space-x-2 hover:bg-primary/90 transition-all duration-300 hover:shadow-[0_0_15px_rgba(155,135,245,0.5)] hover:translate-y-[-2px] group"
+              className="py-3 px-6 rounded-md bg-background/15 backdrop-blur-md border border-white/30 text-foreground font-medium flex items-center justify-center space-x-2 transition-all duration-300 hover:shadow-[0_0_15px_rgba(255,255,255,0.15)] hover:bg-background/20 hover:text-white hover:translate-y-[-2px] group"
             >
               <span>Take Control</span>
               <ArrowRight size={16} className="group-hover:translate-x-1 transition-transform duration-300" />
@@ -65,12 +65,12 @@ export default function HeroSection() {
           {commands.map((command, index) => (
             <div 
               key={index} 
-              className="relative group cursor-pointer font-mono text-sm px-4 py-2 rounded bg-[#222222] text-gray-200 hover:bg-[#333333] transition-all duration-200 flex items-center"
+              className="relative group cursor-pointer font-mono text-sm px-4 py-2 rounded bg-gradient-to-b from-[#222222] to-[#1a1a1a] text-gray-200 hover:bg-gradient-to-b hover:from-[#2a2a2a] hover:to-[#222222] transition-all duration-200 flex items-center shadow-md hover:shadow-lg"
             >
-              <Terminal size={14} className="mr-1.5 opacity-70" />
-              <span className="text-gray-400 mr-1">&gt;</span>
-              <span className={`${command.color}`}>{command.name}</span>
-              <div className="absolute inset-0 bg-gradient-to-r opacity-0 group-hover:opacity-10 transition-opacity duration-300 rounded"></div>
+              <Terminal size={14} className="mr-1.5 opacity-70 text-gray-400" />
+              <span className="text-[#4da37c] mr-1">&gt;</span>
+              <span className={`${command.color} group-hover:brightness-110`}>{command.name}</span>
+              <span className="w-1.5 h-4 ml-1 bg-white/70 opacity-0 group-hover:opacity-70 animate-pulse"></span>
             </div>
           ))}
         </div>
