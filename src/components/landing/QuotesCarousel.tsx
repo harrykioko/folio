@@ -32,7 +32,7 @@ const inspirationalQuotes = [
 
 export default function QuotesCarousel() {
   return (
-    <section className="relative z-10 px-4 py-16 bg-accent/50 backdrop-blur-sm">
+    <section className="relative z-10 px-4 py-16">
       <div className="container mx-auto max-w-screen-lg">
         <Carousel className="w-full max-w-3xl mx-auto" opts={{ loop: true, align: "center" }} autoplay autoplayInterval={3000}>
           <CarouselContent>
