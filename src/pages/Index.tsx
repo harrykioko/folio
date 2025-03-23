@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { 
@@ -14,7 +13,7 @@ import {
   CarouselPrevious,
 } from "@/components/ui/carousel";
 import { Card } from "@/components/ui/card";
-import { VerticalTag } from '@/components/VerticalTag';
+import VerticalTag from '@/components/VerticalTag';
 
 export default function Index() {
   const [isVisible, setIsVisible] = useState(false);
