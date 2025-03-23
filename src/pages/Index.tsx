@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { 
@@ -180,7 +179,7 @@ export default function Index() {
       {/* Inspirational quotes carousel */}
       <section className="relative z-10 px-4 py-16 bg-accent/50 backdrop-blur-sm">
         <div className="container mx-auto max-w-screen-lg">
-          <Carousel className="w-full max-w-3xl mx-auto" opts={{ loop: true, align: "center" }} autoplay>
+          <Carousel className="w-full max-w-3xl mx-auto" opts={{ loop: true, align: "center" }} autoplay autoplayInterval={3000}>
             <CarouselContent>
               {inspirationalQuotes.map((item, index) => (
                 <CarouselItem key={index}>
@@ -199,10 +198,6 @@ export default function Index() {
                 </CarouselItem>
               ))}
             </CarouselContent>
-            <div className="flex justify-center mt-4">
-              <CarouselPrevious className="relative inset-auto mx-2" />
-              <CarouselNext className="relative inset-auto mx-2" />
-            </div>
           </Carousel>
         </div>
       </section>

@@ -1,4 +1,3 @@
-
 import * as React from "react"
 import useEmblaCarousel, {
   type UseEmblaCarouselType,
@@ -56,7 +55,7 @@ const Carousel = React.forwardRef<
       className,
       children,
       autoplay = false,
-      autoplayInterval = 5000,
+      autoplayInterval = 3000,
       ...props
     },
     ref
@@ -71,7 +70,6 @@ const Carousel = React.forwardRef<
     const [canScrollPrev, setCanScrollPrev] = React.useState(false)
     const [canScrollNext, setCanScrollNext] = React.useState(false)
     
-    // Auto-rotation timer reference
     const autoplayTimerRef = React.useRef<NodeJS.Timeout | null>(null)
 
     const startAutoplay = React.useCallback(() => {
@@ -153,7 +151,6 @@ const Carousel = React.forwardRef<
       }
     }, [api, onSelect])
     
-    // Start autoplay when component mounts or when api is initialized
     React.useEffect(() => {
       if (autoplay && api) {
         startAutoplay()
@@ -164,7 +161,6 @@ const Carousel = React.forwardRef<
       }
     }, [api, autoplay, startAutoplay, stopAutoplay])
     
-    // Pause autoplay on mouse enter, resume on mouse leave
     const handleMouseEnter = React.useCallback(() => {
       if (autoplay) {
         stopAutoplay()
