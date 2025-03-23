@@ -122,6 +122,9 @@ export function useGlobalSearch() {
 
   // This would be replaced with actual Supabase queries in a production app
   useEffect(() => {
+    // For debugging
+    console.log('Search query:', searchQuery);
+    
     if (!searchQuery.trim()) {
       setResults([]);
       return;
@@ -131,16 +134,21 @@ export function useGlobalSearch() {
     
     // Simulate API delay
     const timer = setTimeout(() => {
-      const lowerQuery = searchQuery.toLowerCase();
+      const lowerQuery = searchQuery.toLowerCase().trim();
+      console.log('Searching for:', lowerQuery);
       
       // Filter mock results based on search query
-      const filteredResults = mockResults.filter(
-        item => 
-          item.title.toLowerCase().includes(lowerQuery) || 
-          item.description?.toLowerCase().includes(lowerQuery) ||
-          item.tags?.some(tag => tag.toLowerCase().includes(lowerQuery))
-      );
+      const filteredResults = mockResults.filter(item => {
+        const titleMatch = item.title.toLowerCase().includes(lowerQuery);
+        const descMatch = item.description?.toLowerCase().includes(lowerQuery) || false;
+        const tagMatch = item.tags?.some(tag => tag.toLowerCase().includes(lowerQuery)) || false;
+        
+        const matches = titleMatch || descMatch || tagMatch;
+        console.log(`Item: ${item.title}, Matches: ${matches}`);
+        return matches;
+      });
       
+      console.log('Filtered results:', filteredResults);
       setResults(filteredResults);
       setIsLoading(false);
     }, 300);
