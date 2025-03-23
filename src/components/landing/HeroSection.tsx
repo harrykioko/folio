@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowRight, Terminal } from 'lucide-react';
 
@@ -48,10 +48,10 @@ export default function HeroSection() {
           >
             <Link 
               to="/auth?signup=true" 
-              className="py-3 px-6 rounded-md bg-background/25 backdrop-blur-xl border border-white/40 text-foreground font-medium flex items-center justify-center space-x-2 transition-all duration-300 hover:shadow-[0_0_20px_rgba(255,255,255,0.3)] dark:hover:shadow-[0_0_20px_rgba(139,92,246,0.3)] hover:bg-background/30 hover:text-white hover:translate-y-[-2px] group dark:bg-secondary/50 dark:border-white/10 dark:hover:bg-secondary/70"
+              className="py-3 px-6 rounded-md bg-background/25 backdrop-blur-xl border border-white/40 text-foreground font-medium flex items-center justify-center space-x-2 transition-all duration-300 hover:shadow-[0_0_20px_rgba(0,0,0,0.1)] hover:bg-background/30 hover:text-primary-foreground hover:translate-y-[-2px] group dark:bg-secondary/50 dark:border-white/10 dark:hover:bg-secondary/70 dark:hover:shadow-[0_0_20px_rgba(139,92,246,0.3)]"
             >
-              <span>Take Control</span>
-              <ArrowRight size={16} className="group-hover:translate-x-1 transition-transform duration-300" />
+              <span className="text-primary dark:text-white">Take Control</span>
+              <ArrowRight size={16} className="group-hover:translate-x-1 transition-transform duration-300 text-primary dark:text-white" />
             </Link>
           </div>
         </div>
