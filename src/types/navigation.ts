@@ -6,3 +6,7 @@ export interface NavItem {
   path: string;
   icon: ComponentType<{ className?: string }>;
 }
+
+export interface SidebarState {
+  expanded: boolean;
+}

@@ -132,4 +132,13 @@
   .input-focused {
     @apply focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-0;
   }
+  
+  /* Glassmorphism styles */
+  .glass {
+    @apply backdrop-blur-md bg-white/10 border border-white/20 shadow-lg;
+  }
+  
+  .glass-dark {
+    @apply backdrop-blur-md bg-black/30 border border-white/10 shadow-lg;
+  }
 }
