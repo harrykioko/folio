@@ -1,5 +1,15 @@
 ## Project Proposal: Unified Management Platform for Multi-Vertical SaaS Business
 
+**Technical Stack**
+
+- **Frontend**: React 18+ with Vite build system
+- **Routing**: React Router v6+
+- **State Management**: Redux Toolkit for global state, React Query for API data
+- **Styling**: Tailwind CSS 
+- **UI Components**: Shadcn UI components
+- **Backend**: Supabase for database, authentication, and storage
+- **Deployment**: Standard Vite build process with environment-specific configurations
+
 **Overall Goals**
 
 Create a unified management platform that serves as the operational backbone for a multi-vertical SaaS business, enabling founders to efficiently oversee all aspects of the company while automating routine tasks and providing intelligent insights for strategic decision-making.
@@ -185,3 +195,7 @@ This platform will transform operations from fragmented tools to a cohesive syst
 *   Competitive advantage through operational excellence.
 
 By leveraging Supabase to maintain a robust, high-performing database and prioritizing a phased rollout strategy for different modules, this platform will support the dynamic needs of the business, from daily operations to long-term strategic planning.
+
+## Version History
+
+- v1.0.0 - 2025-03-24 - Clarified technology stack as React 18+ with Vite, updated frontend architecture documentation

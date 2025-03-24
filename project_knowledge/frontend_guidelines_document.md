@@ -4,7 +4,7 @@ This document details the overall frontend setup for our unified management plat
 
 ## Frontend Architecture
 
-Our frontend is built using React, a popular library that allows us to design a component-based interface. The architecture focuses on modularity, meaning each part of our UI is a small, reusable piece. This makes it easier to update, debug, and scale as the product grows. Using React also supports rapid development and seamless integration with our backend APIs powered by Node.js, ensuring performance is kept fast and interactions remain under two seconds.
+Our frontend is built using React 18+, a popular library that allows us to design a component-based interface. We use Vite as our build tool, which provides fast development server startup, hot module replacement, and optimized production builds. The architecture focuses on modularity, meaning each part of our UI is a small, reusable piece. This makes it easier to update, debug, and scale as the product grows. Using React with Vite supports rapid development and seamless integration with our backend APIs powered by Supabase, ensuring performance is kept fast and interactions remain under two seconds.
 
 In this architecture:
 
