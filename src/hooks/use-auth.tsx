@@ -1,9 +1,10 @@
-import { useState, useEffect, createContext, useContext, useCallback } from 'react';
-import { useRouter } from 'next/router';
-import { supabase } from '@/integrations/supabase/client';
+import React, { useState, useEffect, createContext, useContext, ReactNode } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { supabase } from '../integrations/supabase/client';
 import { User, AuthError, Session } from '@supabase/supabase-js';
-import { Tables } from '@/integrations/supabase/types';
+import type { Tables } from '../integrations/supabase/types';
 
+// Explicitly define table types
 export type Profile = Tables<'profiles'>;
 export type Project = Tables<'projects'>;
 export type CompanySettings = Tables<'company_settings'>;
@@ -31,8 +32,8 @@ type AuthContextType = AuthState & {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const router = useRouter();
+export const AuthProvider = ({ children }: { children: ReactNode }) => {
+  const navigate = useNavigate();
   const [state, setState] = useState<AuthState>({
     session: null,
     user: null,
@@ -151,7 +152,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             id: data.user.id,
             first_name: firstName,
             last_name: lastName,
-            email: email,
             role: 'user',
           });
 
@@ -177,7 +177,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       isLoading: false,
       error: null,
     });
-    router.push('/login');
+    navigate('/auth');
   };
 
   // Reset password
@@ -284,19 +284,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   return (
-    <AuthContext.Provider
-      value={{
-        ...state,
-        signIn,
-        signUp,
-        signOut,
-        resetPassword,
-        updatePassword,
-        updateProfile,
-        updateCompanySettings,
-        setCurrentProject,
-      }}
-    >
+    <AuthContext.Provider value={{
+      ...state,
+      signIn,
+      signUp,
+      signOut,
+      resetPassword,
+      updatePassword,
+      updateProfile,
+      updateCompanySettings,
+      setCurrentProject,
+    }}>
       {children}
     </AuthContext.Provider>
   );
