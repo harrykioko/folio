@@ -30,7 +30,25 @@ type AuthContextType = AuthState & {
   setCurrentProject: (project: Project) => void;
 };
 
-const AuthContext = createContext<AuthContextType | undefined>(undefined);
+const defaultAuthContext: AuthContextType = {
+  session: null,
+  user: null,
+  profile: null,
+  currentProject: null,
+  companySettings: null,
+  isLoading: false,
+  error: null,
+  signIn: async () => ({ success: false, error: new Error('AuthContext not initialized') }),
+  signUp: async () => ({ success: false, error: new Error('AuthContext not initialized') }),
+  signOut: async () => {},
+  resetPassword: async () => ({ success: false, error: new Error('AuthContext not initialized') }),
+  updatePassword: async () => ({ success: false, error: new Error('AuthContext not initialized') }),
+  updateProfile: async () => ({ success: false, error: new Error('AuthContext not initialized') }),
+  updateCompanySettings: async () => ({ success: false, error: new Error('AuthContext not initialized') }),
+  setCurrentProject: () => {},
+};
+
+const AuthContext = createContext<AuthContextType>(defaultAuthContext);
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const navigate = useNavigate();
@@ -44,31 +62,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     error: null,
   });
 
-  // Set up auth state listener
-  useEffect(() => {
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-      setState(prev => ({ ...prev, session, user: session?.user || null }));
-    });
-
-    // Initialize auth state
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setState(prev => ({ ...prev, session, user: session?.user || null, isLoading: true }));
-      
-      if (session?.user) {
-        // Fetch user profile
-        fetchProfile(session.user.id);
-        // Fetch company settings
-        fetchCompanySettings();
-      } else {
-        setState(prev => ({ ...prev, isLoading: false }));
-      }
-    });
-
-    return () => {
-      subscription.unsubscribe();
-    };
-  }, []);
-
   // Fetch user profile data
   const fetchProfile = async (userId: string) => {
     try {
@@ -78,17 +71,20 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         .eq('id', userId)
         .single();
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error fetching profile:', error);
+        setState(prev => ({ ...prev, isLoading: false }));
+        return;
+      }
 
       setState(prev => ({ 
         ...prev, 
-        profile: data as Profile,
+        profile: data,
         isLoading: false,
-        error: null 
       }));
     } catch (error) {
       console.error('Error fetching profile:', error);
-      setState(prev => ({ ...prev, isLoading: false, error: error as Error }));
+      setState(prev => ({ ...prev, isLoading: false }));
     }
   };
 
@@ -100,19 +96,83 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         .select('*')
         .single();
 
-      if (error && error.code !== 'PGRST116') throw error;
+      if (error) {
+        // PGRST116 is a "no rows returned" error, which is expected if no company settings exist yet
+        if (error.code !== 'PGRST116') {
+          console.error('Error fetching company settings:', error);
+        }
+        setState(prev => ({ ...prev, isLoading: false }));
+        return;
+      }
 
       setState(prev => ({ 
         ...prev, 
-        companySettings: data as CompanySettings,
+        companySettings: data,
         isLoading: false,
-        error: null 
       }));
     } catch (error) {
       console.error('Error fetching company settings:', error);
-      setState(prev => ({ ...prev, isLoading: false, error: error as Error }));
+      setState(prev => ({ ...prev, isLoading: false }));
     }
   };
+
+  // Set up auth state listener
+  useEffect(() => {
+    let subscription: { unsubscribe: () => void } | null = null;
+    
+    const setupAuth = async () => {
+      try {
+        // Set up auth state change listener
+        const { data } = supabase.auth.onAuthStateChange((event, session) => {
+          setState(prev => ({ 
+            ...prev, 
+            session, 
+            user: session?.user || null,
+            isLoading: session ? true : false
+          }));
+          
+          if (session?.user) {
+            fetchProfile(session.user.id);
+            fetchCompanySettings();
+          }
+        });
+        
+        subscription = data.subscription;
+
+        // Get initial session
+        const { data: { session }, error } = await supabase.auth.getSession();
+        
+        if (error) {
+          throw error;
+        }
+
+        setState(prev => ({ 
+          ...prev, 
+          session, 
+          user: session?.user || null,
+          isLoading: session ? true : false
+        }));
+        
+        if (session?.user) {
+          fetchProfile(session.user.id);
+          fetchCompanySettings();
+        } else {
+          setState(prev => ({ ...prev, isLoading: false }));
+        }
+      } catch (error) {
+        console.error('Error setting up auth:', error);
+        setState(prev => ({ ...prev, isLoading: false }));
+      }
+    };
+
+    setupAuth();
+
+    return () => {
+      if (subscription) {
+        subscription.unsubscribe();
+      }
+    };
+  }, []);
 
   // Sign in with email and password
   const signIn = async (email: string, password: string) => {
@@ -146,14 +206,16 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
       if (data.user) {
         // Create profile
+        const profileData = {
+          id: data.user.id,
+          first_name: firstName,
+          last_name: lastName,
+          role: 'user',
+        };
+        
         const { error: profileError } = await supabase
           .from('profiles')
-          .insert({
-            id: data.user.id,
-            first_name: firstName,
-            last_name: lastName,
-            role: 'user',
-          });
+          .insert(profileData);
 
         if (profileError) throw profileError;
       }
@@ -167,17 +229,24 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   // Sign out
   const signOut = async () => {
-    await supabase.auth.signOut();
-    setState({
-      session: null,
-      user: null,
-      profile: null,
-      currentProject: null,
-      companySettings: null,
-      isLoading: false,
-      error: null,
-    });
-    navigate('/auth');
+    try {
+      const { error } = await supabase.auth.signOut();
+      if (error) throw error;
+      
+      setState({
+        session: null,
+        user: null,
+        profile: null,
+        currentProject: null,
+        companySettings: null,
+        isLoading: false,
+        error: null,
+      });
+      
+      navigate('/auth');
+    } catch (error) {
+      console.error('Error signing out:', error);
+    }
   };
 
   // Reset password
@@ -302,8 +371,5 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
 export const useAuth = () => {
   const context = useContext(AuthContext);
-  if (context === undefined) {
-    throw new Error('useAuth must be used within an AuthProvider');
-  }
   return context;
 };
