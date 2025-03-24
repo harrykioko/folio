@@ -44,13 +44,13 @@ export default function ProtectedRoute({
   // Use useEffect for showing toasts to avoid React warnings
   useEffect(() => {
     // Check if user exists but profile doesn't
-    if (user && !profile && location.pathname !== "/settings/profile" && !redirectTo) {
+    if (user && !profile && location.pathname !== "/settings" && !redirectTo) {
       toast({
         title: "Profile not complete",
         description: "Please complete your profile to continue.",
         variant: "default"
       });
-      setRedirectTo("/settings/profile");
+      setRedirectTo("/settings");
     }
     
     // Check for admin access for admin-only routes
