@@ -1,14 +1,68 @@
-import { ReactNode, useEffect } from "react";
-import { Navigate, useLocation } from "react-router-dom";
+import { ReactNode, useEffect, useState } from "react";
+import { Navigate, Outlet, useLocation } from "react-router-dom";
 import { useAuth } from "@/hooks/use-auth";
+import { useToast } from "@/components/ui/use-toast";
 
 interface ProtectedRouteProps {
-  children: ReactNode;
+  children?: ReactNode;
+  requireAdmin?: boolean;
 }
 
-export default function ProtectedRoute({ children }: ProtectedRouteProps) {
-  const { user, isLoading } = useAuth();
+export default function ProtectedRoute({ 
+  children, 
+  requireAdmin = false 
+}: ProtectedRouteProps) {
+  const { user, session, isLoading, profile, refreshSession, isAdmin } = useAuth();
   const location = useLocation();
+  const { toast } = useToast();
+  const [redirectTo, setRedirectTo] = useState<string | null>(null);
+
+  // Check session validity and refresh if needed
+  useEffect(() => {
+    // Only run if user exists but might need refresh
+    if (user && session) {
+      const checkSession = async () => {
+        // Get session expiry time
+        const expiresAt = session.expires_at;
+        if (expiresAt) {
+          const expiryTime = new Date(expiresAt * 1000); // Convert to milliseconds
+          const now = new Date();
+          
+          // If session expires in less than 30 minutes, refresh it
+          const thirtyMinutesFromNow = new Date(now.getTime() + 30 * 60 * 1000);
+          if (expiryTime < thirtyMinutesFromNow) {
+            console.log("Session expiring soon, refreshing...");
+            await refreshSession();
+          }
+        }
+      };
+      
+      checkSession();
+    }
+  }, [user, session, refreshSession]);
+
+  // Use useEffect for showing toasts to avoid React warnings
+  useEffect(() => {
+    // Check if user exists but profile doesn't
+    if (user && !profile && location.pathname !== "/settings/profile" && !redirectTo) {
+      toast({
+        title: "Profile not complete",
+        description: "Please complete your profile to continue.",
+        variant: "default"
+      });
+      setRedirectTo("/settings/profile");
+    }
+    
+    // Check for admin access for admin-only routes
+    if (user && requireAdmin && !isAdmin && !redirectTo) {
+      toast({
+        title: "Access denied",
+        description: "You don't have permission to access this page.",
+        variant: "destructive"
+      });
+      setRedirectTo("/dashboard");
+    }
+  }, [user, profile, isAdmin, requireAdmin, location.pathname, redirectTo, toast]);
 
   // If authentication is still loading, show a minimal loading state
   if (isLoading) {
@@ -21,9 +75,15 @@ export default function ProtectedRoute({ children }: ProtectedRouteProps) {
 
   // Redirect to auth page if not authenticated
   if (!user) {
-    return <Navigate to="/auth" state={{ from: location }} replace />;
+    // Store the attempted URL for redirection after login
+    return <Navigate to="/auth" state={{ from: location.pathname }} replace />;
   }
 
-  // If authenticated, render the children
-  return <>{children}</>;
+  // Handle redirects set from the useEffect hooks
+  if (redirectTo) {
+    return <Navigate to={redirectTo} state={{ from: location.pathname }} replace />;
+  }
+
+  // If authenticated and has required role, render the children or outlet
+  return children ? <>{children}</> : <Outlet />;
 }
