@@ -1,69 +1,150 @@
-# Welcome to your Lovable project
 
-## Project info
+# Folio - Unified Management Platform
 
-**URL**: https://lovable.dev/projects/df29818d-8e9d-428d-aa51-5d4dd569f19e
+## Project Overview
 
-## How can I edit this code?
+Folio is the central data management platform that enables unified operational management across all HIM verticals. It serves as the operational backbone of the organization, providing a single source of truth for all business assets, collaboration tools, and analytics capabilities.
 
-There are several ways of editing your application.
+The platform is designed to reduce administrative overhead by centralizing information management, automating routine tasks, and providing intelligent insights for strategic decision-making. This allows founders and team members to focus on growth while maintaining complete visibility and control over operations.
 
-**Use Lovable**
+## Key Features
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/df29818d-8e9d-428d-aa51-5d4dd569f19e) and start prompting.
+### Centralized Asset Repository
+- **Domain Management**: Track registrations, renewal dates, and DNS settings
+- **Account Management**: Securely store credentials for all business tools and services
+- **Document Storage**: Legal documents, contracts, and important business files
+- **Technical Asset Registry**: Code repositories, API credentials, and configuration management
 
-Changes made via Lovable will be committed automatically to this repo.
+### AI Assistance
+- **Intelligent Research**: AI-powered tools for information gathering and summarization
+- **Content Generation**: Automated creation of reports, documentation, and communications
+- **Decision Support**: Data analysis and recommendations for strategic planning
+- **Workflow Automation**: AI-driven automation of routine administrative tasks
 
-**Use your preferred IDE**
+### Workspace Collaboration
+- **Real-Time Document Editing**: Collaborative workspace for team document creation
+- **Task Management**: Assign, track, and prioritize work across the organization
+- **Meeting Coordination**: Scheduling, agenda building, and minutes capture
+- **Team Communication**: Integrated messaging and discussion threads
 
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
+### Comprehensive Analytics
+- **Financial Tracking**: Budget management and expense monitoring
+- **Performance Metrics**: Custom KPI tracking across all business verticals
+- **Cross-Vertical Analysis**: Identify patterns and opportunities across product lines
+- **Visualization Tools**: Clear data representation for strategic insights
 
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
+## Technical Overview
 
-Follow these steps:
+Folio is built on a modern technology stack:
 
-```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
+- **Frontend**: React with TypeScript, leveraging shadcn/ui components and Tailwind CSS
+- **Backend**: Supabase providing PostgreSQL database, authentication, and serverless functions
+- **Infrastructure**: Cloud-hosted with CI/CD pipelines for seamless deployment
+- **Security**: JWT authentication, role-based access control, and comprehensive audit logging
 
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
+## Project Structure
 
-# Step 3: Install the necessary dependencies.
-npm i
+The codebase is organized as follows:
 
-# Step 4: Start the development server with auto-reloading and an instant preview.
-npm run dev
+```
+folio/
+├── public/              # Static assets
+├── src/
+│   ├── components/      # Reusable UI components
+│   │   ├── ui/          # Base UI components from shadcn
+│   │   ├── landing/     # Components for landing page
+│   │   └── settings/    # Components for settings pages
+│   ├── config/          # Configuration files
+│   ├── hooks/           # Custom React hooks
+│   ├── integrations/    # External service integrations
+│   │   └── supabase/    # Supabase client and types
+│   ├── lib/             # Utility functions and helpers
+│   ├── pages/           # Top-level page components
+│   └── types/           # TypeScript type definitions
+├── supabase/            # Supabase configuration
+└── tailwind.config.ts   # Tailwind CSS configuration
 ```
 
-**Edit a file directly in GitHub**
+## Setup Instructions
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+### Prerequisites
+- Node.js (v18 or later)
+- npm or yarn
+- Git
 
-**Use GitHub Codespaces**
+### Installation
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
+1. Clone the repository
+```bash
+git clone <repository-url>
+cd folio
+```
 
-## What technologies are used for this project?
+2. Install dependencies
+```bash
+npm install
+# or
+yarn install
+```
 
-This project is built with .
+3. Set up environment variables
+- Copy `.env.example` to `.env.local`
+- Update the variables with your Supabase credentials
 
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
+4. Start the development server
+```bash
+npm run dev
+# or
+yarn dev
+```
 
-## How can I deploy this project?
+## Development Workflow
 
-Simply open [Lovable](https://lovable.dev/projects/df29818d-8e9d-428d-aa51-5d4dd569f19e) and click on Share -> Publish.
+### Git Workflow
 
-## I want to use a custom domain - is that possible?
+We recommend following a GitHub Flow approach:
 
-We don't support custom domains (yet). If you want to deploy your project under your own domain then we recommend using Netlify. Visit our docs for more details: [Custom domains](https://docs.lovable.dev/tips-tricks/custom-domain/)
+1. Create a new branch for each feature or bug fix
+```bash
+git checkout -b feature/feature-name
+# or
+git checkout -b fix/bug-name
+```
+
+2. Make changes and commit frequently with clear messages
+```bash
+git commit -m "Add brief description of changes"
+```
+
+3. Push to the remote repository and create a pull request
+```bash
+git push -u origin feature/feature-name
+```
+
+4. After code review, merge to the main branch
+
+### Code Style
+
+- Follow the existing project structure and naming conventions
+- Use TypeScript for type safety
+- Write clean, self-documenting code with appropriate comments
+- Ensure components are modular and reusable
+
+## Transition Plan: Lovable to Windsurf
+
+Folio was initially developed using Lovable's AI-assisted development platform. The transition to Windsurf involves:
+
+1. **Code Migration**: Transfer of the codebase to Windsurf's development environment
+2. **Feature Parity Validation**: Ensure all functionality works identically in the new environment
+3. **Performance Optimization**: Leverage Windsurf's capabilities to enhance application performance
+4. **Development Workflow Adaptation**: Adjust team processes to align with Windsurf's collaboration tools
+
+The transition is scheduled to be completed by Q4 2024, with both platforms running in parallel during the transition period to ensure business continuity.
+
+## Contact Information
+
+**Project Owner**: HIM Technology Team
+- Email: tech@himgroup.com
+- Internal Slack: #folio-development
+
+For urgent issues or questions, please contact the current project lead directly or post in the dedicated Slack channel.
