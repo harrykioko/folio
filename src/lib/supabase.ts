@@ -1,9 +1,17 @@
-
 import { createClient } from '@supabase/supabase-js';
 
-// Use environment variables for Supabase configuration
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || 'https://dnjookyyhfnxvjyytggt.supabase.co';
+// Check if using local Supabase instance for development
+const useLocalSupabase = import.meta.env.VITE_USE_LOCAL_SUPABASE === 'true';
+
+// Determine which Supabase configuration to use based on environment
+const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || (useLocalSupabase 
+  ? 'http://127.0.0.1:54321' 
+  : 'https://dnjookyyhfnxvjyytggt.supabase.co');
+
 const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRuam9va3l5aGZueHZqeXl0Z2d0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDI3NjA0NTEsImV4cCI6MjA1ODMzNjQ1MX0.7emCEDqiIpOPJcbK0Uc2YKqCcw7zw8OeAt3wF0N_dck';
+
+// Log which environment is being used (helpful for debugging)
+console.log(`Using ${useLocalSupabase ? 'local' : 'production'} Supabase instance: ${supabaseUrl}`);
 
 export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
   auth: {
