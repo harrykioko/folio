@@ -226,14 +226,18 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         const { data } = supabase.auth.onAuthStateChange((event, session) => {
           console.log('Auth state changed:', event);
           
+          // Only set isLoading true for specific events that require fetching profile
+          const shouldFetchProfile = ['SIGNED_IN', 'TOKEN_REFRESHED', 'USER_UPDATED'].includes(event);
+          
           setState(prev => ({ 
             ...prev, 
             session, 
             user: session?.user || null,
-            isLoading: session ? true : false
+            // Only set isLoading if we need to fetch profile and don't have one already
+            isLoading: session && shouldFetchProfile && !prev.profile ? true : prev.isLoading
           }));
           
-          if (session?.user) {
+          if (session?.user && shouldFetchProfile) {
             fetchProfile(session.user.id);
             fetchCompanySettings();
           } else if (event === 'SIGNED_OUT') {
@@ -255,7 +259,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           ...prev, 
           session, 
           user: session?.user || null,
-          isLoading: session ? true : false
+          isLoading: session?.user ? true : false
         }));
         
         if (session?.user) {
@@ -277,7 +281,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         subscription.unsubscribe();
       }
     };
-  }, [queryClient]);
+  }, []);
 
   // Sign in with email and password
   const signIn = async (email: string, password: string) => {
