@@ -18,43 +18,48 @@ import Assets from "./pages/Assets";
 import Tasks from "./pages/Tasks";
 import Analytics from "./pages/Analytics";
 import Assistant from "./pages/Assistant";
+import ErrorBoundary from "./components/ErrorBoundary";
 
 const queryClient = new QueryClient();
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
-    <AuthProvider>
+    <ErrorBoundary>
       <BrowserRouter>
         <TooltipProvider>
           <Toaster />
           <Sonner />
-          <Routes>
-            <Route path="/" element={<Index />} />
-            <Route path="/auth" element={<Auth />} />
-            <Route path="/reset-password" element={<ResetPassword />} />
-            
-            {/* Protected routes with MainLayout */}
-            <Route element={
-              <ProtectedRoute>
-                <MainLayout />
-              </ProtectedRoute>
-            }>
-              <Route path="/dashboard" element={<Dashboard />} />
-              <Route path="/portfolio" element={<Portfolio />} />
-              <Route path="/workspace" element={<Workspace />} />
-              <Route path="/assets" element={<Assets />} />
-              <Route path="/tasks" element={<Tasks />} />
-              <Route path="/analytics" element={<Analytics />} />
-              <Route path="/assistant" element={<Assistant />} />
-              <Route path="/settings" element={<Settings />} />
-            </Route>
-            
-            {/* Catch-all route */}
-            <Route path="*" element={<NotFound />} />
-          </Routes>
+          <ErrorBoundary>
+            <AuthProvider>
+              <Routes>
+                <Route path="/" element={<Index />} />
+                <Route path="/auth" element={<Auth />} />
+                <Route path="/reset-password" element={<ResetPassword />} />
+                
+                {/* Protected routes with MainLayout */}
+                <Route element={
+                  <ProtectedRoute>
+                    <MainLayout />
+                  </ProtectedRoute>
+                }>
+                  <Route path="/dashboard" element={<Dashboard />} />
+                  <Route path="/portfolio" element={<Portfolio />} />
+                  <Route path="/workspace" element={<Workspace />} />
+                  <Route path="/assets" element={<Assets />} />
+                  <Route path="/tasks" element={<Tasks />} />
+                  <Route path="/analytics" element={<Analytics />} />
+                  <Route path="/assistant" element={<Assistant />} />
+                  <Route path="/settings" element={<Settings />} />
+                </Route>
+                
+                {/* Catch-all route */}
+                <Route path="*" element={<NotFound />} />
+              </Routes>
+            </AuthProvider>
+          </ErrorBoundary>
         </TooltipProvider>
       </BrowserRouter>
-    </AuthProvider>
+    </ErrorBoundary>
   </QueryClientProvider>
 );
 
