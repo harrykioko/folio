@@ -158,9 +158,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           const defaultSettings = {
             id: '00000000-0000-0000-0000-000000000000',
             name: 'Folio',
-            primary_color: '#3b82f6',
             created_at: new Date().toISOString(),
           };
+          
+          console.log('Attempting to create default company settings:', defaultSettings);
           
           const { data: newSettings, error: insertError } = await supabase
             .from('company_settings')
@@ -544,7 +545,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             id: '00000000-0000-0000-0000-000000000000', // Using the constant ID as per schema
             name: settings.name || 'My Company',
             logo_url: settings.logo_url || null,
-            primary_color: settings.primary_color || '#3498db',
           });
 
         if (error) throw error;

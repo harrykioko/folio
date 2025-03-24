@@ -22,44 +22,24 @@ export default function ProtectedRoute({
 
     const checkAuth = async () => {
       if (!isMounted) return;
-
-      // Check session validity first
+      
+      // Only check session validity if we have both user and session
       if (user && session) {
         const expiresAt = session.expires_at;
         if (expiresAt) {
           const expiryTime = new Date(expiresAt * 1000);
           const now = new Date();
           const thirtyMinutesFromNow = new Date(now.getTime() + 30 * 60 * 1000);
+          
+          // Only refresh if session is about to expire
           if (expiryTime < thirtyMinutesFromNow) {
-            await refreshSession();
+            try {
+              await refreshSession();
+            } catch (error) {
+              console.error("Failed to refresh session:", error);
+            }
           }
         }
-      }
-
-      // Check profile completeness
-      if (user && !profile && location.pathname !== '/settings') {
-        if (isMounted) {
-          toast({
-            title: 'Profile not complete',
-            description: 'Please complete your profile to continue.',
-            variant: 'default'
-          });
-          setRedirectTo('/settings');
-        }
-        return;
-      }
-
-      // Check admin access
-      if (user && requireAdmin && !isAdmin) {
-        if (isMounted) {
-          toast({
-            title: 'Access denied',
-            description: 'You don\'t have permission to access this page.',
-            variant: 'destructive'
-          });
-          setRedirectTo('/dashboard');
-        }
-        return;
       }
     };
 
@@ -68,7 +48,34 @@ export default function ProtectedRoute({
     return () => {
       isMounted = false;
     };
-  }, [user, session, profile, isAdmin, requireAdmin, location.pathname, refreshSession, toast]);
+  }, [user, session, refreshSession]);
+
+  // Check profile and admin status in a separate effect to avoid refresh loops
+  useEffect(() => {
+    if (!user || isLoading) return;
+
+    // Check profile completeness
+    if (user && !profile && location.pathname !== '/settings') {
+      toast({
+        title: 'Profile not complete',
+        description: 'Please complete your profile to continue.',
+        variant: 'default'
+      });
+      setRedirectTo('/settings');
+      return;
+    }
+
+    // Check admin access
+    if (user && requireAdmin && !isAdmin) {
+      toast({
+        title: 'Access denied',
+        description: 'You don\'t have permission to access this page.',
+        variant: 'destructive'
+      });
+      setRedirectTo('/dashboard');
+      return;
+    }
+  }, [user, profile, isAdmin, requireAdmin, location.pathname, toast, isLoading]);
 
   // If authentication is still loading, show a minimal loading state
   if (isLoading) {
