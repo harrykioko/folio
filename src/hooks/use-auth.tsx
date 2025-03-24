@@ -78,24 +78,21 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     try {
       console.log('Fetching profile for user:', userId);
       
-      // Try to get existing profile
-      const { data, error } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('id', userId)
-        .single();
-        
+      // Try to get existing profile using RPC function to bypass RLS
+      const { data, error } = await supabase.rpc(
+        'get_user_profile', 
+        { user_id: userId }
+      );
+      
       if (error) {
         console.error('Error fetching profile:', error);
         
-        // Create new profile if none exists (PGRST116 error means no rows found)
+        // Create new profile if none exists using RPC
         if ((error.code === 'PGRST116' || error.message.includes('no rows')) && retryCount < 3) {
-          // Get user metadata from auth.users if possible
           const { data: authUser } = await supabase.auth.getUser();
           const user = authUser?.user;
           const userMeta = user?.user_metadata || {};
           
-          // Prepare default profile data
           const defaultProfile = {
             id: userId,
             first_name: userMeta.first_name || user?.email?.split('@')[0] || 'User',
@@ -106,43 +103,23 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           
           console.log('Creating new profile with data:', defaultProfile);
           
-          // PRIORITIZE THE RPC METHOD: Attempt to create profile using RPC to bypass RLS
-          console.log('Attempting to create profile using RPC function...');
           const { data: rpcResult, error: rpcError } = await supabase.rpc(
             'create_user_profile',
             { profile_data: defaultProfile }
           );
           
           if (rpcError) {
-            console.error('RPC error details:', rpcError);
-            console.log('RPC method failed, attempting direct insert as fallback');
+            console.error('RPC error creating profile:', rpcError);
             
-            // Fallback to direct insert if RPC fails
-            const { data: newProfile, error: insertError } = await supabase
-              .from('profiles')
-              .upsert(defaultProfile)
-              .select()
-              .single();
-              
-            if (insertError) {
-              console.error('Error creating profile via direct insert:', insertError);
-              
-              if (retryCount < 2) {
-                console.log(`Retrying profile creation (attempt ${retryCount + 1})...`);
-                // Exponential backoff for retries
-                setTimeout(() => fetchProfile(userId, retryCount + 1), 1000 * Math.pow(2, retryCount));
-                return;
-              } else {
-                toast({
-                  title: "Error creating user profile",
-                  description: "Please ensure you've applied the SQL fixes in Supabase or contact support.",
-                  variant: "destructive"
-                });
-              }
-            } else {
-              console.log('Successfully created profile via direct insert:', newProfile);
-              setState(prev => ({ ...prev, profile: newProfile, isLoading: false }));
+            if (retryCount < 2) {
+              setTimeout(() => fetchProfile(userId, retryCount + 1), 1000 * Math.pow(2, retryCount));
               return;
+            } else {
+              toast({
+                title: "Error creating user profile",
+                description: "Please contact support.",
+                variant: "destructive"
+              });
             }
           } else {
             console.log('Successfully created profile via RPC:', rpcResult);
@@ -155,7 +132,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         return;
       }
 
-      console.log('Successfully fetched existing profile:', data);
+      console.log('Successfully fetched profile:', data);
       setState(prev => ({ ...prev, profile: data, isLoading: false }));
 
     } catch (error) {
