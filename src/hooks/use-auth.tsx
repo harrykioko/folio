@@ -73,17 +73,53 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
       if (error) {
         console.error('Error fetching profile:', error);
+        
+        // If no profile exists, create one
+        if (error.code === 'PGRST116') {
+          console.log('No profile found, creating a new one');
+          
+          // Get user metadata to populate profile
+          const { data: userData } = await supabase.auth.getUser();
+          const user = userData?.user;
+          
+          if (user) {
+            const userMeta = user.user_metadata || {};
+            
+            // Create default profile
+            const defaultProfile = {
+              id: userId,
+              first_name: userMeta.first_name || user.email?.split('@')[0] || 'User',
+              last_name: userMeta.last_name || '',
+              role: 'user',
+              created_at: new Date().toISOString(),
+            };
+            
+            const { data: newProfile, error: insertError } = await supabase
+              .from('profiles')
+              .insert(defaultProfile)
+              .select()
+              .single();
+              
+            if (insertError) {
+              console.error('Error creating profile:', insertError);
+              setState(prev => ({ ...prev, isLoading: false }));
+              return;
+            }
+            
+            console.log('Created new profile', newProfile);
+            setState(prev => ({ ...prev, profile: newProfile, isLoading: false }));
+            return;
+          }
+        }
+        
         setState(prev => ({ ...prev, isLoading: false }));
         return;
       }
 
-      setState(prev => ({ 
-        ...prev, 
-        profile: data,
-        isLoading: false,
-      }));
+      setState(prev => ({ ...prev, profile: data, isLoading: false }));
+
     } catch (error) {
-      console.error('Error fetching profile:', error);
+      console.error('Error in fetchProfile:', error);
       setState(prev => ({ ...prev, isLoading: false }));
     }
   };
