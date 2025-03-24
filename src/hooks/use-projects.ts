@@ -6,16 +6,27 @@ import { Tables } from '@/integrations/supabase/types';
 export type Project = Tables<'projects'>;
 export type ProjectMember = Tables<'project_members'>;
 
+// Extended type for project members with profiles
+interface ProjectMemberWithProfile extends Omit<ProjectMember, 'profiles'> {
+  profiles?: {
+    id: string;
+    first_name: string | null;
+    last_name: string | null;
+    avatar_url: string | null;
+    role: string;
+  };
+}
+
 interface ProjectsState {
   projects: Project[] | null;
   currentProject: Project | null;
-  members: Record<string, ProjectMember[]>;
+  members: Record<string, ProjectMemberWithProfile[]>;
   isLoading: boolean;
   error: Error | null;
 }
 
 export function useProjects() {
-  const { user, currentOrganization } = useAuth();
+  const { user, currentProject } = useAuth();
   const [state, setState] = useState<ProjectsState>({
     projects: null,
     currentProject: null,
@@ -24,27 +35,48 @@ export function useProjects() {
     error: null,
   });
 
-  // Fetch all projects for the current organization
+  // Fetch all projects the user is a member of
   const fetchProjects = useCallback(async () => {
-    if (!user || !currentOrganization) return;
+    if (!user) return;
 
     setState(prev => ({ ...prev, isLoading: true }));
 
     try {
-      const { data: projects, error } = await supabase
-        .from('projects')
-        .select('*')
-        .eq('organization_id', currentOrganization.id);
+      // Get memberships
+      const { data: memberships, error: membershipError } = await supabase
+        .from('project_members')
+        .select('project_id, role')
+        .eq('user_id', user.id);
 
-      if (error) throw error;
+      if (membershipError) throw membershipError;
 
-      setState(prev => ({
-        ...prev,
-        projects,
-        currentProject: prev.currentProject || (projects.length > 0 ? projects[0] : null),
-        isLoading: false,
-        error: null,
-      }));
+      if (memberships && memberships.length > 0) {
+        const projectIds = memberships.map(m => m.project_id);
+        
+        // Get projects
+        const { data: projects, error: projectsError } = await supabase
+          .from('projects')
+          .select('*')
+          .in('id', projectIds);
+
+        if (projectsError) throw projectsError;
+
+        setState(prev => ({
+          ...prev,
+          projects,
+          currentProject: currentProject || projects[0] || null,
+          isLoading: false,
+          error: null,
+        }));
+      } else {
+        setState(prev => ({
+          ...prev,
+          projects: [],
+          currentProject: null,
+          isLoading: false,
+          error: null,
+        }));
+      }
     } catch (error) {
       setState(prev => ({
         ...prev,
@@ -52,7 +84,7 @@ export function useProjects() {
         error: error as Error,
       }));
     }
-  }, [user, currentOrganization]);
+  }, [user, currentProject]);
 
   // Fetch members for a specific project
   const fetchProjectMembers = useCallback(async (projectId: string) => {
@@ -61,31 +93,41 @@ export function useProjects() {
     setState(prev => ({ ...prev, isLoading: true }));
 
     try {
-      const { data: memberData, error } = await supabase
+      // Get all members of this project
+      const { data: memberData, error: membersError } = await supabase
         .from('project_members')
         .select(`
           id,
           user_id,
           project_id,
           role,
-          joined_at,
+          created_at,
+          updated_at,
           profiles:user_id (
             id,
             first_name,
             last_name,
             avatar_url,
-            email
+            role
           )
         `)
         .eq('project_id', projectId);
 
-      if (error) throw error;
+      if (membersError) throw membersError;
+
+      // Transform the data to match our ProjectMemberWithProfile type
+      const typedMemberData = memberData ? memberData.map(member => ({
+        ...member,
+        profiles: Array.isArray(member.profiles) && member.profiles.length > 0 
+          ? member.profiles[0] 
+          : member.profiles
+      })) : [];
 
       setState(prev => ({
         ...prev,
         members: {
           ...prev.members,
-          [projectId]: memberData || [],
+          [projectId]: typedMemberData as ProjectMemberWithProfile[],
         },
         isLoading: false,
         error: null,
@@ -102,16 +144,11 @@ export function useProjects() {
   // Create a new project
   const createProject = async (
     name: string, 
-    description: string,
-    verticalId: string,
-    status: 'active' | 'completed' | 'archived' = 'active',
-    startDate?: string,
-    endDate?: string,
-    logoUrl?: string
+    description: string, 
+    verticalId: string | null = null,
+    color: string | null = null
   ) => {
-    if (!user || !currentOrganization) {
-      return { data: null, error: new Error('User not authenticated or no organization selected') };
-    }
+    if (!user) return { data: null, error: new Error('Not authenticated') };
 
     try {
       // Insert project
@@ -120,25 +157,23 @@ export function useProjects() {
         .insert({
           name,
           description,
-          organization_id: currentOrganization.id,
+          color,
           vertical_id: verticalId,
-          status,
-          start_date: startDate,
-          end_date: endDate,
-          logo_url: logoUrl,
+          status: 'active',
+          created_by: user.id
         })
         .select()
         .single();
 
       if (projectError) throw projectError;
 
-      // Make the current user a project admin
+      // Make the current user an owner
       const { error: memberError } = await supabase
         .from('project_members')
         .insert({
           project_id: project.id,
           user_id: user.id,
-          role: 'admin',
+          role: 'owner',
         });
 
       if (memberError) throw memberError;
@@ -187,71 +222,57 @@ export function useProjects() {
     }
   };
 
-  // Delete a project
-  const deleteProject = async (id: string) => {
-    if (!user) return { success: false, error: new Error('Not authenticated') };
-
-    try {
-      // Check if user has permission (should be a project admin)
-      const { data: memberCheck, error: memberCheckError } = await supabase
-        .from('project_members')
-        .select('role')
-        .eq('project_id', id)
-        .eq('user_id', user.id)
-        .single();
-
-      if (memberCheckError) throw memberCheckError;
-      if (!memberCheck || memberCheck.role !== 'admin') {
-        throw new Error('You do not have permission to delete this project');
-      }
-
-      // Delete the project
-      const { error } = await supabase
-        .from('projects')
-        .delete()
-        .eq('id', id);
-
-      if (error) throw error;
-
-      // Update local state
-      setState(prev => {
-        const updatedProjects = prev.projects?.filter(project => project.id !== id) || null;
-        return {
-          ...prev,
-          projects: updatedProjects,
-          currentProject: prev.currentProject?.id === id 
-            ? (updatedProjects && updatedProjects.length > 0 ? updatedProjects[0] : null)
-            : prev.currentProject,
-        };
-      });
-
-      return { success: true, error: null };
-    } catch (error) {
-      return { success: false, error: error as Error };
-    }
-  };
-
-  // Add a user to a project
-  const addUserToProject = async (
+  // Invite a user to a project
+  const inviteUserToProject = async (
     projectId: string, 
-    userId: string, 
-    role: 'admin' | 'member' | 'viewer' = 'member'
+    email: string, 
+    role: 'owner' | 'editor' | 'viewer' = 'viewer'
   ) => {
     if (!user) return { success: false, error: new Error('Not authenticated') };
 
     try {
-      const { error } = await supabase
+      // Check if the user already exists in the system
+      const { data: userData, error: userError } = await supabase
+        .from('profiles')
+        .select('id')
+        .eq('email', email)
+        .single();
+
+      if (userError && userError.code !== 'PGRST116') {
+        throw userError;
+      }
+
+      // If user doesn't exist, implement invite mechanism here
+      // For now, we'll just handle existing users
+      if (!userData) {
+        throw new Error('User not found in the system');
+      }
+
+      // Check if they're already a member
+      const { data: existingMember, error: memberCheckError } = await supabase
+        .from('project_members')
+        .select('id')
+        .eq('project_id', projectId)
+        .eq('user_id', userData.id)
+        .single();
+
+      if (existingMember) {
+        return { success: false, error: new Error('User is already a member of this project') };
+      }
+
+      // Add user to project
+      const { error: addMemberError } = await supabase
         .from('project_members')
         .insert({
           project_id: projectId,
-          user_id: userId,
+          user_id: userData.id,
           role,
         });
 
-      if (error) throw error;
+      if (addMemberError) throw addMemberError;
 
-      // Refresh project members
-      fetchProjectMembers(projectId);
+      // Refresh members
+      await fetchProjectMembers(projectId);
 
       return { success: true, error: null };
     } catch (error) {
@@ -262,12 +283,13 @@ export function useProjects() {
   // Remove a user from a project
   const removeUserFromProject = async (projectId: string, userId: string) => {
     if (!user) return { success: false, error: new Error('Not authenticated') };
-    
+
     try {
       const { error } = await supabase
         .from('project_members')
         .delete()
-        .match({ project_id: projectId, user_id: userId });
+        .eq('project_id', projectId)
+        .eq('user_id', userId);
 
       if (error) throw error;
 
@@ -286,7 +308,37 @@ export function useProjects() {
     }
   };
 
-  // Set the current project
+  // Change user role in project
+  const changeUserRole = async (projectId: string, userId: string, newRole: string) => {
+    if (!user) return { success: false, error: new Error('Not authenticated') };
+
+    try {
+      const { error } = await supabase
+        .from('project_members')
+        .update({ role: newRole })
+        .eq('project_id', projectId)
+        .eq('user_id', userId);
+
+      if (error) throw error;
+
+      // Update local state
+      setState(prev => ({
+        ...prev,
+        members: {
+          ...prev.members,
+          [projectId]: prev.members[projectId]?.map(m => 
+            m.user_id === userId ? { ...m, role: newRole } : m
+          ) || [],
+        },
+      }));
+
+      return { success: true, error: null };
+    } catch (error) {
+      return { success: false, error: error as Error };
+    }
+  };
+
+  // Set current project
   const setCurrentProject = (project: Project) => {
     setState(prev => ({
       ...prev,
@@ -294,87 +346,33 @@ export function useProjects() {
     }));
   };
 
-  // Load projects when component mounts or organization changes
+  // Load initial data
   useEffect(() => {
-    if (user && currentOrganization) {
+    if (user) {
       fetchProjects();
-    } else {
-      setState({
-        projects: null,
-        currentProject: null,
-        members: {},
-        isLoading: false,
-        error: null,
-      });
     }
-  }, [user, currentOrganization, fetchProjects]);
+  }, [user, fetchProjects]);
 
-  // Load members of the current project when it changes
+  // Load members when current project changes
   useEffect(() => {
     if (user && state.currentProject) {
       fetchProjectMembers(state.currentProject.id);
     }
   }, [user, state.currentProject, fetchProjectMembers]);
 
-  // Setup realtime subscription for project changes
-  useEffect(() => {
-    if (!user || !currentOrganization) return;
-
-    // Subscribe to project changes
-    const projectsSubscription = supabase
-      .channel('projects-changes')
-      .on('postgres_changes', 
-        { 
-          event: '*', 
-          schema: 'public', 
-          table: 'projects',
-          filter: `organization_id=eq.${currentOrganization.id}`
-        }, 
-        () => {
-          fetchProjects();
-        }
-      )
-      .subscribe();
-
-    // Subscribe to project member changes if a project is selected
-    let membersSubscription;
-    if (state.currentProject) {
-      membersSubscription = supabase
-        .channel('project-members-changes')
-        .on('postgres_changes', 
-          { 
-            event: '*', 
-            schema: 'public', 
-            table: 'project_members',
-            filter: `project_id=eq.${state.currentProject.id}`
-          }, 
-          () => {
-            fetchProjectMembers(state.currentProject!.id);
-          }
-        )
-        .subscribe();
-    }
-
-    return () => {
-      projectsSubscription.unsubscribe();
-      if (membersSubscription) membersSubscription.unsubscribe();
-    };
-  }, [user, currentOrganization, state.currentProject, fetchProjects, fetchProjectMembers]);
-
   return {
     projects: state.projects,
-    currentProject: state.currentProject,
-    currentProjectMembers: state.currentProject 
-      ? state.members[state.currentProject.id] || [] 
-      : [],
+    currentProject: state.currentProject || currentProject,
+    members: state.members,
     isLoading: state.isLoading,
     error: state.error,
+    fetchProjects,
+    fetchProjectMembers,
     createProject,
     updateProject,
-    deleteProject,
-    addUserToProject,
+    inviteUserToProject,
     removeUserFromProject,
+    changeUserRole,
     setCurrentProject,
-    fetchProjectMembers,
   };
 }

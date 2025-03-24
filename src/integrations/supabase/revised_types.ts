@@ -15,7 +15,7 @@ export type Database = {
           first_name: string | null
           last_name: string | null
           avatar_url: string | null
-          role: string | null
+          role: string
           created_at: string
           updated_at: string
         }
@@ -23,9 +23,8 @@ export type Database = {
           id: string
           first_name?: string | null
           last_name?: string | null
-          email: string
-          role?: string
           avatar_url?: string | null
+          role?: string
           created_at?: string
           updated_at?: string
         }
@@ -33,61 +32,37 @@ export type Database = {
           id?: string
           first_name?: string | null
           last_name?: string | null
-          email?: string
-          role?: string
           avatar_url?: string | null
+          role?: string
           created_at?: string
           updated_at?: string
         }
       }
-      organizations: {
+      company_settings: {
         Row: {
           id: string
           name: string
-          slug: string
           logo_url: string | null
+          theme_color: string | null
+          contact_email: string | null
           created_at: string
           updated_at: string
         }
         Insert: {
           id?: string
           name: string
-          slug: string
           logo_url?: string | null
+          theme_color?: string | null
+          contact_email?: string | null
           created_at?: string
           updated_at?: string
         }
         Update: {
           id?: string
           name?: string
-          slug?: string
           logo_url?: string | null
-          created_at?: string
-          updated_at?: string
-        }
-      }
-      organization_members: {
-        Row: {
-          id: string
-          organization_id: string
-          user_id: string
-          role: string
-          created_at: string
-          updated_at: string
-        }
-        Insert: {
-          id?: string
-          organization_id: string
-          user_id: string
-          role: string
-          created_at?: string
-          updated_at?: string
-        }
-        Update: {
-          id?: string
-          organization_id?: string
-          user_id?: string
-          role?: string
+          theme_color?: string | null
+          contact_email?: string | null
           created_at?: string
           updated_at?: string
         }
@@ -98,7 +73,6 @@ export type Database = {
           name: string
           slug: string
           color: string
-          organization_id: string
           created_at: string
           updated_at: string
         }
@@ -107,7 +81,6 @@ export type Database = {
           name: string
           slug: string
           color: string
-          organization_id: string
           created_at?: string
           updated_at?: string
         }
@@ -116,7 +89,6 @@ export type Database = {
           name?: string
           slug?: string
           color?: string
-          organization_id?: string
           created_at?: string
           updated_at?: string
         }
@@ -129,7 +101,6 @@ export type Database = {
           color: string | null
           status: string
           vertical_id: string | null
-          organization_id: string
           created_by: string | null
           created_at: string
           updated_at: string
@@ -141,7 +112,6 @@ export type Database = {
           color?: string | null
           status: string
           vertical_id?: string | null
-          organization_id: string
           created_by?: string | null
           created_at?: string
           updated_at?: string
@@ -153,7 +123,6 @@ export type Database = {
           color?: string | null
           status?: string
           vertical_id?: string | null
-          organization_id?: string
           created_by?: string | null
           created_at?: string
           updated_at?: string
@@ -191,7 +160,6 @@ export type Database = {
           name: string
           slug: string
           description: string | null
-          organization_id: string
           created_at: string
           updated_at: string
         }
@@ -200,7 +168,6 @@ export type Database = {
           name: string
           slug: string
           description?: string | null
-          organization_id: string
           created_at?: string
           updated_at?: string
         }
@@ -209,7 +176,6 @@ export type Database = {
           name?: string
           slug?: string
           description?: string | null
-          organization_id?: string
           created_at?: string
           updated_at?: string
         }
@@ -226,7 +192,6 @@ export type Database = {
           thumbnail_url: string | null
           starred: boolean
           metadata: Json | null
-          organization_id: string
           created_by: string | null
           owner: string | null
           created_at: string
@@ -243,7 +208,6 @@ export type Database = {
           thumbnail_url?: string | null
           starred?: boolean
           metadata?: Json | null
-          organization_id: string
           created_by?: string | null
           owner?: string | null
           created_at?: string
@@ -260,7 +224,6 @@ export type Database = {
           thumbnail_url?: string | null
           starred?: boolean
           metadata?: Json | null
-          organization_id?: string
           created_by?: string | null
           owner?: string | null
           created_at?: string
@@ -299,7 +262,6 @@ export type Database = {
           vertical_id: string | null
           assignee_id: string | null
           created_by: string | null
-          organization_id: string
           created_at: string
           updated_at: string
         }
@@ -314,7 +276,6 @@ export type Database = {
           vertical_id?: string | null
           assignee_id?: string | null
           created_by?: string | null
-          organization_id: string
           created_at?: string
           updated_at?: string
         }
@@ -329,7 +290,6 @@ export type Database = {
           vertical_id?: string | null
           assignee_id?: string | null
           created_by?: string | null
-          organization_id?: string
           created_at?: string
           updated_at?: string
         }
@@ -398,7 +358,6 @@ export type Database = {
           name: string
           description: string | null
           project_id: string | null
-          organization_id: string
           created_by: string | null
           created_at: string
           updated_at: string
@@ -408,7 +367,6 @@ export type Database = {
           name: string
           description?: string | null
           project_id?: string | null
-          organization_id: string
           created_by?: string | null
           created_at?: string
           updated_at?: string
@@ -418,7 +376,6 @@ export type Database = {
           name?: string
           description?: string | null
           project_id?: string | null
-          organization_id?: string
           created_by?: string | null
           created_at?: string
           updated_at?: string
@@ -432,7 +389,6 @@ export type Database = {
           workspace_id: string
           project_id: string | null
           created_by: string | null
-          organization_id: string
           created_at: string
           updated_at: string
         }
@@ -443,7 +399,6 @@ export type Database = {
           workspace_id: string
           project_id?: string | null
           created_by?: string | null
-          organization_id: string
           created_at?: string
           updated_at?: string
         }
@@ -454,7 +409,6 @@ export type Database = {
           workspace_id?: string
           project_id?: string | null
           created_by?: string | null
-          organization_id?: string
           created_at?: string
           updated_at?: string
         }
@@ -493,7 +447,6 @@ export type Database = {
           currency: string | null
           metrics: Json | null
           project_id: string | null
-          organization_id: string
           created_by: string | null
           created_at: string
           updated_at: string
@@ -508,7 +461,6 @@ export type Database = {
           currency?: string | null
           metrics?: Json | null
           project_id?: string | null
-          organization_id: string
           created_by?: string | null
           created_at?: string
           updated_at?: string
@@ -523,7 +475,6 @@ export type Database = {
           currency?: string | null
           metrics?: Json | null
           project_id?: string | null
-          organization_id?: string
           created_by?: string | null
           created_at?: string
           updated_at?: string
@@ -537,7 +488,6 @@ export type Database = {
           entity_id: string
           user_id: string
           metadata: Json | null
-          organization_id: string
           created_at: string
         }
         Insert: {
@@ -547,7 +497,6 @@ export type Database = {
           entity_id: string
           user_id: string
           metadata?: Json | null
-          organization_id: string
           created_at?: string
         }
         Update: {
@@ -557,7 +506,6 @@ export type Database = {
           entity_id?: string
           user_id?: string
           metadata?: Json | null
-          organization_id?: string
           created_at?: string
         }
       }
@@ -571,7 +519,6 @@ export type Database = {
           entity_type: string | null
           entity_id: string | null
           user_id: string
-          organization_id: string
           created_at: string
         }
         Insert: {
@@ -583,7 +530,6 @@ export type Database = {
           entity_type?: string | null
           entity_id?: string | null
           user_id: string
-          organization_id: string
           created_at?: string
         }
         Update: {
@@ -595,7 +541,6 @@ export type Database = {
           entity_type?: string | null
           entity_id?: string | null
           user_id?: string
-          organization_id?: string
           created_at?: string
         }
       }
@@ -604,7 +549,6 @@ export type Database = {
           id: string
           title: string | null
           user_id: string
-          organization_id: string
           created_at: string
           updated_at: string
         }
@@ -612,7 +556,6 @@ export type Database = {
           id?: string
           title?: string | null
           user_id: string
-          organization_id: string
           created_at?: string
           updated_at?: string
         }
@@ -620,7 +563,6 @@ export type Database = {
           id?: string
           title?: string | null
           user_id?: string
-          organization_id?: string
           created_at?: string
           updated_at?: string
         }
@@ -651,28 +593,89 @@ export type Database = {
           created_at?: string
         }
       }
-      company_settings: {
+      user_settings: {
+        Row: {
+          id: string
+          theme: string
+          notifications_enabled: boolean
+          email_notifications_enabled: boolean
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id: string
+          theme?: string
+          notifications_enabled?: boolean
+          email_notifications_enabled?: boolean
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          theme?: string
+          notifications_enabled?: boolean
+          email_notifications_enabled?: boolean
+          created_at?: string
+          updated_at?: string
+        }
+      }
+      analytics_dashboards: {
         Row: {
           id: string
           name: string
-          logo_url: string | null
-          primary_color: string | null
+          description: string | null
+          layout: Json | null
+          created_by: string | null
           created_at: string
           updated_at: string
         }
         Insert: {
           id?: string
           name: string
-          logo_url?: string | null
-          primary_color?: string | null
+          description?: string | null
+          layout?: Json | null
+          created_by?: string | null
           created_at?: string
           updated_at?: string
         }
         Update: {
           id?: string
           name?: string
-          logo_url?: string | null
-          primary_color?: string | null
+          description?: string | null
+          layout?: Json | null
+          created_by?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+      }
+      analytics_widgets: {
+        Row: {
+          id: string
+          dashboard_id: string
+          title: string
+          type: string
+          config: Json
+          position: Json | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          dashboard_id: string
+          title: string
+          type: string
+          config: Json
+          position?: Json | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          dashboard_id?: string
+          title?: string
+          type?: string
+          config?: Json
+          position?: Json | null
           created_at?: string
           updated_at?: string
         }
@@ -693,36 +696,95 @@ export type Database = {
   }
 }
 
-type PublicSchema = Database[Extract<keyof Database, "public">]
+export type Tables<
+  PublicTableNameOrOptions extends
+    | keyof (Database["public"]["Tables"] & Database["public"]["Views"])
+    | { schema: keyof Database },
+  TableName extends PublicTableNameOrOptions extends { schema: keyof Database }
+    ? keyof (Database[PublicTableNameOrOptions["schema"]]["Tables"] &
+        Database[PublicTableNameOrOptions["schema"]]["Views"])
+    : never = never
+> = PublicTableNameOrOptions extends { schema: keyof Database }
+  ? (Database[PublicTableNameOrOptions["schema"]]["Tables"] &
+      Database[PublicTableNameOrOptions["schema"]]["Views"])[TableName] extends {
+      Row: infer R
+    }
+    ? R
+    : never
+  : PublicTableNameOrOptions extends keyof (Database["public"]["Tables"] &
+      Database["public"]["Views"])
+  ? (Database["public"]["Tables"] &
+      Database["public"]["Views"])[PublicTableNameOrOptions] extends {
+      Row: infer R
+    }
+    ? R
+    : never
+  : never
 
-export type Tables<T extends keyof Database['public']['Tables']> = Database['public']['Tables'][T]['Row'];
-export type InsertTables<T extends keyof Database['public']['Tables']> = Database['public']['Tables'][T]['Insert'];
-export type UpdateTables<T extends keyof Database['public']['Tables']> = Database['public']['Tables'][T]['Update'];
+export type TablesInsert<
+  PublicTableNameOrOptions extends
+    | keyof Database["public"]["Tables"]
+    | { schema: keyof Database },
+  TableName extends PublicTableNameOrOptions extends { schema: keyof Database }
+    ? keyof Database[PublicTableNameOrOptions["schema"]]["Tables"]
+    : never = never
+> = PublicTableNameOrOptions extends { schema: keyof Database }
+  ? Database[PublicTableNameOrOptions["schema"]]["Tables"][TableName] extends {
+      Insert: infer I
+    }
+    ? I
+    : never
+  : PublicTableNameOrOptions extends keyof Database["public"]["Tables"]
+  ? Database["public"]["Tables"][PublicTableNameOrOptions] extends {
+      Insert: infer I
+    }
+    ? I
+    : never
+  : never
+
+export type TablesUpdate<
+  PublicTableNameOrOptions extends
+    | keyof Database["public"]["Tables"]
+    | { schema: keyof Database },
+  TableName extends PublicTableNameOrOptions extends { schema: keyof Database }
+    ? keyof Database[PublicTableNameOrOptions["schema"]]["Tables"]
+    : never = never
+> = PublicTableNameOrOptions extends { schema: keyof Database }
+  ? Database[PublicTableNameOrOptions["schema"]]["Tables"][TableName] extends {
+      Update: infer U
+    }
+    ? U
+    : never
+  : PublicTableNameOrOptions extends keyof Database["public"]["Tables"]
+  ? Database["public"]["Tables"][PublicTableNameOrOptions] extends {
+      Update: infer U
+    }
+    ? U
+    : never
+  : never
 
 export type Enums<
   PublicEnumNameOrOptions extends
-    | keyof PublicSchema["Enums"]
+    | keyof Database["public"]["Enums"]
     | { schema: keyof Database },
   EnumName extends PublicEnumNameOrOptions extends { schema: keyof Database }
     ? keyof Database[PublicEnumNameOrOptions["schema"]]["Enums"]
-    : never = never,
+    : never = never
 > = PublicEnumNameOrOptions extends { schema: keyof Database }
   ? Database[PublicEnumNameOrOptions["schema"]]["Enums"][EnumName]
-  : PublicEnumNameOrOptions extends keyof PublicSchema["Enums"]
-    ? PublicSchema["Enums"][PublicEnumNameOrOptions]
-    : never
+  : PublicEnumNameOrOptions extends keyof Database["public"]["Enums"]
+  ? Database["public"]["Enums"][PublicEnumNameOrOptions]
+  : never
 
 export type CompositeTypes<
-  PublicCompositeTypeNameOrOptions extends
-    | keyof PublicSchema["CompositeTypes"]
+  PublicTypeNameOrOptions extends
+    | keyof Database["public"]["CompositeTypes"]
     | { schema: keyof Database },
-  CompositeTypeName extends PublicCompositeTypeNameOrOptions extends {
-    schema: keyof Database
-  }
-    ? keyof Database[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"]
-    : never = never,
-> = PublicCompositeTypeNameOrOptions extends { schema: keyof Database }
-  ? Database[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"][CompositeTypeName]
-  : PublicCompositeTypeNameOrOptions extends keyof PublicSchema["CompositeTypes"]
-    ? PublicSchema["CompositeTypes"][PublicCompositeTypeNameOrOptions]
-    : never
+  TypeName extends PublicTypeNameOrOptions extends { schema: keyof Database }
+    ? keyof Database[PublicTypeNameOrOptions["schema"]]["CompositeTypes"]
+    : never = never
+> = PublicTypeNameOrOptions extends { schema: keyof Database }
+  ? Database[PublicTypeNameOrOptions["schema"]]["CompositeTypes"][TypeName]
+  : PublicTypeNameOrOptions extends keyof Database["public"]["CompositeTypes"]
+  ? Database["public"]["CompositeTypes"][PublicTypeNameOrOptions]
+  : never

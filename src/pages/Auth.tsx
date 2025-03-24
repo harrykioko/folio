@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Eye, EyeOff, ArrowRight } from 'lucide-react';
@@ -132,9 +131,9 @@ export default function Auth() {
             
             {isSignIn && (
               <div className="text-right">
-                <a href="#" className="text-sm text-primary/90 hover:text-primary transition-colors">
+                <Link to="/reset-password" className="text-sm text-primary/90 hover:text-primary transition-colors">
                   Forgot password?
-                </a>
+                </Link>
               </div>
             )}
             
