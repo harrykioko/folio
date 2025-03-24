@@ -20,6 +20,7 @@ export default function ProtectedRoute({
   // Session refresh effect - only handles token refresh, not profile loading
   useEffect(() => {
     let isMounted = true;
+    let refreshTimeout: NodeJS.Timeout | null = null;
 
     const checkAuth = async () => {
       if (!isMounted) return;
@@ -39,6 +40,16 @@ export default function ProtectedRoute({
             } catch (error) {
               console.error("Failed to refresh session:", error);
             }
+          } else {
+            // Schedule the next refresh check
+            const timeUntilRefresh = Math.max(
+              0, 
+              expiryTime.getTime() - thirtyMinutesFromNow.getTime()
+            );
+            
+            // Set a timeout to refresh before expiry (minimum 1 minute)
+            const delayMs = Math.max(60000, timeUntilRefresh);
+            refreshTimeout = setTimeout(checkAuth, delayMs);
           }
         }
       }
@@ -48,15 +59,21 @@ export default function ProtectedRoute({
 
     return () => {
       isMounted = false;
+      if (refreshTimeout) {
+        clearTimeout(refreshTimeout);
+      }
     };
-  }, [user, session, refreshSession]);
+  }, [user?.id, session?.expires_at]);
 
-  // Check profile and admin status in a separate effect to avoid refresh loops
+  // Check profile and admin status in a separate effect with careful dependency management
   useEffect(() => {
+    // Clear any previous redirect when dependencies change
+    setRedirectTo(null);
+    
+    // Skip this effect if we're still loading or don't have a user
     if (!user || isLoading) return;
 
-    // Check profile completeness - this is now handled by useAuth() internally
-    // so we only need to check the profile value
+    // Check profile completeness
     if (user && !user.app_metadata?.profile_complete && location.pathname !== '/settings') {
       toast({
         title: 'Profile not complete',
@@ -68,7 +85,7 @@ export default function ProtectedRoute({
     }
 
     // Check admin access
-    if (user && requireAdmin && !isAdmin) {
+    if (requireAdmin && !isAdmin) {
       toast({
         title: 'Access denied',
         description: 'You don\'t have permission to access this page.',
@@ -77,7 +94,14 @@ export default function ProtectedRoute({
       setRedirectTo('/dashboard');
       return;
     }
-  }, [user, requireAdmin, location.pathname, toast, isLoading, isAdmin]);
+  }, [
+    user?.id, 
+    user?.app_metadata?.profile_complete, 
+    isAdmin, 
+    requireAdmin, 
+    location.pathname, 
+    isLoading
+  ]);
 
   // If authentication is still loading, show a minimal loading state
   if (isLoading) {
