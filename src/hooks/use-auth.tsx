@@ -147,6 +147,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       const { data, error } = await supabase
         .from('company_settings')
         .select('*')
+        .eq('user_id', state.user?.id)
         .single();
 
       if (error) {
@@ -156,9 +157,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         } else if (retryCount < 1) {
           // If no company settings exist, create default ones
           const defaultSettings = {
-            id: '00000000-0000-0000-0000-000000000000',
-            name: 'Folio',
+            user_id: state.user?.id,
+            company_name: 'Folio',
             created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString(),
           };
           
           console.log('Attempting to create default company settings:', defaultSettings);
@@ -524,16 +526,16 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   // Update company settings
   const updateCompanySettings = async (settings: Partial<CompanySettings>) => {
-    if (!state.user) return { success: false, error: new Error('Not authenticated') };
-    if (!isAdmin) return { success: false, error: new Error('Insufficient permissions') };
-
     try {
-      // Check if company settings exist
-      if (state.companySettings) {
+      if (state.companySettings?.id) {
         // Update existing settings
         const { error } = await supabase
           .from('company_settings')
-          .update(settings)
+          .update({
+            company_name: settings.company_name,
+            logo_url: settings.logo_url,
+            updated_at: new Date().toISOString(),
+          })
           .eq('id', state.companySettings.id);
 
         if (error) throw error;
@@ -542,9 +544,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         const { error } = await supabase
           .from('company_settings')
           .insert({
-            id: '00000000-0000-0000-0000-000000000000', // Using the constant ID as per schema
-            name: settings.name || 'My Company',
+            user_id: state.user?.id,
+            company_name: settings.company_name || 'My Company',
             logo_url: settings.logo_url || null,
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString(),
           });
 
         if (error) throw error;

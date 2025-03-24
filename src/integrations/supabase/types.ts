@@ -654,25 +654,25 @@ export type Database = {
       company_settings: {
         Row: {
           id: string
-          name: string
+          user_id: string
+          company_name: string | null
           logo_url: string | null
-          primary_color: string | null
           created_at: string
           updated_at: string
         }
         Insert: {
           id?: string
-          name: string
+          user_id: string
+          company_name?: string | null
           logo_url?: string | null
-          primary_color?: string | null
           created_at?: string
           updated_at?: string
         }
         Update: {
           id?: string
-          name?: string
+          user_id?: string
+          company_name?: string | null
           logo_url?: string | null
-          primary_color?: string | null
           created_at?: string
           updated_at?: string
         }
