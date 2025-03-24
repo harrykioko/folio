@@ -18,7 +18,11 @@ export default function ProtectedRoute({
   const [redirectTo, setRedirectTo] = useState<string | null>(null);
 
   useEffect(() => {
+    let isMounted = true;
+
     const checkAuth = async () => {
+      if (!isMounted) return;
+
       // Check session validity first
       if (user && session) {
         const expiresAt = session.expires_at;
@@ -34,28 +38,36 @@ export default function ProtectedRoute({
 
       // Check profile completeness
       if (user && !profile && location.pathname !== '/settings') {
-        toast({
-          title: 'Profile not complete',
-          description: 'Please complete your profile to continue.',
-          variant: 'default'
-        });
-        setRedirectTo('/settings');
+        if (isMounted) {
+          toast({
+            title: 'Profile not complete',
+            description: 'Please complete your profile to continue.',
+            variant: 'default'
+          });
+          setRedirectTo('/settings');
+        }
         return;
       }
 
       // Check admin access
       if (user && requireAdmin && !isAdmin) {
-        toast({
-          title: 'Access denied',
-          description: 'You don\'t have permission to access this page.',
-          variant: 'destructive'
-        });
-        setRedirectTo('/dashboard');
+        if (isMounted) {
+          toast({
+            title: 'Access denied',
+            description: 'You don\'t have permission to access this page.',
+            variant: 'destructive'
+          });
+          setRedirectTo('/dashboard');
+        }
         return;
       }
     };
 
     checkAuth();
+
+    return () => {
+      isMounted = false;
+    };
   }, [user, session, profile, isAdmin, requireAdmin, location.pathname, refreshSession, toast]);
 
   // If authentication is still loading, show a minimal loading state
