@@ -4,10 +4,14 @@ import { supabase } from '@/integrations/supabase/client';
 import { Tables } from '@/integrations/supabase/types';
 
 export type Profile = Tables<'profiles'>;
+export type Organization = Tables<'organizations'>;
+export type OrganizationMember = Tables<'organization_members'>;
 
 interface AuthState {
   user: User | null;
   profile: Profile | null;
+  organizations: Organization[] | null;
+  currentOrganization: Organization | null;
   isLoading: boolean;
   error: AuthError | Error | null;
 }
@@ -16,9 +20,46 @@ export function useAuth() {
   const [authState, setAuthState] = useState<AuthState>({
     user: null,
     profile: null,
+    organizations: null,
+    currentOrganization: null,
     isLoading: true,
     error: null,
   });
+
+  // Fetch user organizations
+  const fetchUserOrganizations = async (userId: string) => {
+    try {
+      // Get organizations the user is a member of
+      const { data: memberships, error: membershipError } = await supabase
+        .from('organization_members')
+        .select('organization_id, role')
+        .eq('user_id', userId);
+      
+      if (membershipError) throw membershipError;
+      
+      if (memberships && memberships.length > 0) {
+        // Get organization details
+        const orgIds = memberships.map(m => m.organization_id);
+        const { data: orgs, error: orgsError } = await supabase
+          .from('organizations')
+          .select('*')
+          .in('id', orgIds);
+          
+        if (orgsError) throw orgsError;
+        
+        // Set current organization to the first one
+        return {
+          organizations: orgs,
+          currentOrganization: orgs[0] || null
+        };
+      }
+      
+      return { organizations: [], currentOrganization: null };
+    } catch (error) {
+      console.error('Error fetching organizations:', error);
+      return { organizations: [], currentOrganization: null };
+    }
+  };
 
   useEffect(() => {
     // Get initial session
@@ -42,10 +83,15 @@ export function useAuth() {
           if (profileError && profileError.code !== 'PGRST116') {
             throw profileError;
           }
+          
+          // Fetch organizations
+          const { organizations, currentOrganization } = await fetchUserOrganizations(session.user.id);
 
           setAuthState({
             user: session.user,
             profile,
+            organizations,
+            currentOrganization,
             isLoading: false,
             error: null,
           });
@@ -53,6 +99,8 @@ export function useAuth() {
           setAuthState({
             user: null,
             profile: null,
+            organizations: null,
+            currentOrganization: null,
             isLoading: false,
             error: null,
           });
@@ -61,6 +109,8 @@ export function useAuth() {
         setAuthState({
           user: null,
           profile: null,
+          organizations: null,
+          currentOrganization: null,
           isLoading: false,
           error: error as AuthError | Error,
         });
@@ -79,10 +129,15 @@ export function useAuth() {
             .select('*')
             .eq('id', session.user.id)
             .single();
+            
+          // Fetch organizations
+          const { organizations, currentOrganization } = await fetchUserOrganizations(session.user.id);
 
           setAuthState({
             user: session.user,
             profile,
+            organizations,
+            currentOrganization,
             isLoading: false,
             error: profileError && profileError.code !== 'PGRST116' ? profileError : null,
           });
@@ -112,6 +167,8 @@ export function useAuth() {
           setAuthState({
             user: null,
             profile: null,
+            organizations: null,
+            currentOrganization: null,
             isLoading: false,
             error: null,
           });
@@ -174,7 +231,7 @@ export function useAuth() {
 
   const updateProfile = async (updates: Partial<Profile>) => {
     if (!authState.user) {
-      return { data: null, error: new Error('User not authenticated') };
+      return { data: null, error: new Error('User not authenticated') as Error };
     }
 
     try {
@@ -197,18 +254,73 @@ export function useAuth() {
 
       return { data, error: null };
     } catch (error) {
-      return { data: null, error };
+      return { data: null, error: error as Error };
+    }
+  };
+  
+  const setCurrentOrganization = (organization: Organization) => {
+    setAuthState(prev => ({
+      ...prev,
+      currentOrganization: organization,
+    }));
+  };
+  
+  const createOrganization = async (name: string, slug: string, logoUrl?: string) => {
+    if (!authState.user) {
+      return { data: null, error: new Error('User not authenticated') as Error };
+    }
+    
+    try {
+      // Begin a transaction to create org and add user as admin
+      const { data: newOrg, error: orgError } = await supabase
+        .from('organizations')
+        .insert({
+          name,
+          slug,
+          logo_url: logoUrl,
+        })
+        .select()
+        .single();
+        
+      if (orgError) throw orgError;
+      
+      // Add the creator as an admin
+      const { error: memberError } = await supabase
+        .from('organization_members')
+        .insert({
+          organization_id: newOrg.id,
+          user_id: authState.user.id,
+          role: 'admin',
+        });
+        
+      if (memberError) throw memberError;
+      
+      // Update local state
+      const updatedOrgs = [...(authState.organizations || []), newOrg];
+      setAuthState(prev => ({
+        ...prev,
+        organizations: updatedOrgs,
+        currentOrganization: newOrg,
+      }));
+      
+      return { data: newOrg, error: null };
+    } catch (error) {
+      return { data: null, error: error as Error };
     }
   };
 
   return {
     user: authState.user,
     profile: authState.profile,
+    organizations: authState.organizations,
+    currentOrganization: authState.currentOrganization,
     isLoading: authState.isLoading,
     error: authState.error,
     signIn,
     signUp,
     signOut,
     updateProfile,
+    setCurrentOrganization,
+    createOrganization,
   };
 }
