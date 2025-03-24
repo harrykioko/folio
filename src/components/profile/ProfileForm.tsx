@@ -7,7 +7,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { useToast } from '@/components/ui/use-toast';
-import { useSupabaseQuery } from '@/hooks/useSupabaseQuery';
+import { useSupabaseQuerySingle } from '@/hooks/useSupabaseQuery';
 
 type Profile = {
   id: string;
@@ -50,9 +50,9 @@ export function ProfileForm() {
   }, []);
 
   // Fetch the user's profile using our custom hook
-  const { data: profile, loading: profileLoading, error: profileError } = useSupabaseQuery<Profile>(
+  const { data: profile, loading: profileLoading, error: profileError } = useSupabaseQuerySingle<Profile>(
     'profiles',
-    (query) => query.select('*').eq('id', userId || '').single(),
+    (query) => query.select('*').eq('id', userId || ''),
     [userId]
   );
 
