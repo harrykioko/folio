@@ -16,64 +16,40 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import VerticalTag, { VerticalType } from '@/components/VerticalTag';
+import { useDashboard } from '@/hooks/use-dashboard';
+import { useAuth } from '@/hooks/use-auth';
+import { Skeleton } from '@/components/ui/skeleton';
 
 const Dashboard = () => {
   const [date, setDate] = useState<Date | undefined>(new Date());
   const [selectedActivityType, setSelectedActivityType] = useState<string | null>(null);
   const [selectedVertical, setSelectedVertical] = useState<VerticalType | null>(null);
   
-  // Sample user info
-  const user = {
-    name: 'Alex Johnson',
-    role: 'Product Manager',
-  };
-
-  // Sample activity feed data
-  const activityFeed = [
-    { id: 1, type: 'task', message: 'Marketing campaign assets ready for review', time: '10 minutes ago', user: 'Sarah Chen', vertical: 'marketing' as VerticalType },
-    { id: 2, type: 'document', message: 'Q3 Financial Report updated', time: '1 hour ago', user: 'Mark Johnson', vertical: 'finance' as VerticalType },
-    { id: 3, type: 'comment', message: 'New comment on Product Roadmap', time: '3 hours ago', user: 'Emily Wong', vertical: 'product' as VerticalType },
-    { id: 4, type: 'meeting', message: 'Team Sync scheduled for tomorrow', time: '5 hours ago', user: 'System', vertical: 'development' as VerticalType },
-  ];
-
-  // Sample priority tasks with added vertical info
-  const priorityTasks = [
-    { id: 1, title: 'Review Q4 marketing budget', dueDate: 'Today', priority: 'high', vertical: 'marketing' as VerticalType },
-    { id: 2, title: 'Finalize partnership agreement', dueDate: 'Tomorrow', priority: 'high', vertical: 'finance' as VerticalType },
-    { id: 3, title: 'Prepare for investor meeting', dueDate: 'Sep 15', priority: 'medium', vertical: 'finance' as VerticalType },
-    { id: 4, title: 'Review product prototype', dueDate: 'Sep 18', priority: 'medium', vertical: 'product' as VerticalType },
-  ];
-
-  // Sample quick links
-  const quickLinks = [
-    { title: 'Product Roadmap', icon: LineChart, url: '/workspace' },
-    { title: 'Marketing Calendar', icon: Calendar, url: '/workspace' },
-    { title: 'Design Assets', icon: Link, url: '/assets' },
-    { title: 'Team Directory', icon: User, url: '/settings' },
-  ];
-
-  // Sample metrics data
-  const metrics = [
-    { title: 'Active Projects', value: '12', change: '+2', isPositive: true },
-    { title: 'Tasks Completed', value: '48', change: '+5', isPositive: true },
-    { title: 'Open Issues', value: '8', change: '-3', isPositive: true },
-    { title: 'Team Utilization', value: '87%', change: '+2%', isPositive: true },
-  ];
-
-  // Updated quick access tiles with the requested actions
-  const quickAccess = [
-    { title: 'New Task', icon: CheckCircle2, color: 'bg-blue-500' },
-    { title: 'New Document', icon: FileText, color: 'bg-green-500' },
-    { title: 'New Asset', icon: Database, color: 'bg-purple-500' },
-    { title: 'Ask Foley', icon: MessageCircle, color: 'bg-amber-500' },
-  ];
-
+  const { user } = useAuth();
+  const { 
+    priorityTasks, 
+    activityFeed, 
+    metrics, 
+    quickLinks,
+    isLoading,
+    createTask,
+    completeTask
+  } = useDashboard();
+  
   // Filter activity feed based on selections
-  const filteredActivities = activityFeed.filter(activity => {
+  const filteredActivities = activityFeed?.filter(activity => {
     if (selectedActivityType && activity.type !== selectedActivityType) return false;
     if (selectedVertical && activity.vertical !== selectedVertical) return false;
     return true;
-  });
+  }) || [];
+
+  // Quick access tiles
+  const quickAccess = [
+    { title: 'New Task', icon: CheckCircle2, color: 'bg-blue-500', action: () => {} },
+    { title: 'New Document', icon: FileText, color: 'bg-green-500', action: () => {} },
+    { title: 'New Asset', icon: Database, color: 'bg-purple-500', action: () => {} },
+    { title: 'Ask Foley', icon: MessageCircle, color: 'bg-amber-500', action: () => {} },
+  ];
 
   return (
     <div className="container px-4 md:px-6">
@@ -81,7 +57,7 @@ const Dashboard = () => {
         <div>
           <h1 className="text-2xl font-semibold">Dashboard</h1>
           <p className="text-muted-foreground">
-            Welcome back, <span className="font-medium">{user.name}</span>! Here's an overview of your workspace.
+            Welcome back, <span className="font-medium">{user?.profile?.first_name || 'User'}</span>! Here's an overview of your workspace.
           </p>
         </div>
         <div className="mt-4 md:mt-0">
@@ -99,7 +75,7 @@ const Dashboard = () => {
       {/* Quick access section */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
         {quickAccess.map((item, index) => (
-          <Card key={index} className="overflow-hidden cursor-pointer hover:shadow-md transition-shadow">
+          <Card key={index} className="overflow-hidden cursor-pointer hover:shadow-md transition-shadow" onClick={item.action}>
             <CardContent className="p-0">
               <div className="flex items-center p-4">
                 <div className={`${item.color} text-white p-2 rounded-lg mr-4`}>
@@ -120,20 +96,33 @@ const Dashboard = () => {
         <div className="md:col-span-2">
           <h2 className="text-lg font-medium mb-4">Key Metrics</h2>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-            {metrics.map((metric, index) => (
-              <Card key={index}>
-                <CardContent className="pt-6">
-                  <div className="text-2xl font-bold">{metric.value}</div>
-                  <p className="text-sm text-muted-foreground">{metric.title}</p>
-                  <div className={`text-xs mt-1 flex items-center ${
-                    metric.isPositive ? 'text-green-500' : 'text-red-500'
-                  }`}>
-                    {metric.change}
-                    <ArrowUpRight className="w-3 h-3 ml-1" />
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
+            {isLoading ? (
+              // Loading skeletons for metrics
+              Array(4).fill(0).map((_, index) => (
+                <Card key={index}>
+                  <CardContent className="pt-6">
+                    <Skeleton className="h-8 w-16 mb-2" />
+                    <Skeleton className="h-4 w-24 mb-2" />
+                    <Skeleton className="h-3 w-12" />
+                  </CardContent>
+                </Card>
+              ))
+            ) : (
+              metrics?.map((metric, index) => (
+                <Card key={index}>
+                  <CardContent className="pt-6">
+                    <div className="text-2xl font-bold">{metric.value}</div>
+                    <p className="text-sm text-muted-foreground">{metric.title}</p>
+                    <div className={`text-xs mt-1 flex items-center ${
+                      metric.isPositive ? 'text-green-500' : 'text-red-500'
+                    }`}>
+                      {metric.change}
+                      <ArrowUpRight className="w-3 h-3 ml-1" />
+                    </div>
+                  </CardContent>
+                </Card>
+              ))
+            )}
           </div>
 
           {/* Priority tasks */}
@@ -149,51 +138,94 @@ const Dashboard = () => {
               </div>
             </CardHeader>
             <CardContent>
-              <div className="space-y-4">
-                {priorityTasks.map((task) => (
-                  <div key={task.id} className="flex items-center justify-between border-b border-border pb-2 last:border-0 last:pb-0">
-                    <div className="flex items-center">
-                      <div className={`w-2 h-2 rounded-full mr-3 ${
-                        task.priority === 'high' ? 'bg-red-500' : 
-                        task.priority === 'medium' ? 'bg-amber-500' : 'bg-blue-500'
-                      }`}></div>
-                      <div>
-                        <div className="flex items-center gap-2">
-                          <p className="font-medium">{task.title}</p>
-                          <VerticalTag vertical={task.vertical} />
-                        </div>
-                        <div className="flex items-center text-xs text-muted-foreground mt-1">
-                          <Clock className="w-3 h-3 mr-1" />
-                          Due {task.dueDate}
-                        </div>
-                      </div>
+              {isLoading ? (
+                // Loading skeletons for tasks
+                <div className="space-y-4">
+                  {Array(4).fill(0).map((_, index) => (
+                    <div key={index} className="flex items-center justify-between border-b border-border pb-2 last:border-0 last:pb-0">
+                      <Skeleton className="h-12 w-full" />
                     </div>
-                    <Button variant="ghost" size="sm">View</Button>
-                  </div>
-                ))}
-              </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {priorityTasks?.length ? (
+                    priorityTasks.map((task) => (
+                      <div key={task.id} className="flex items-center justify-between border-b border-border pb-2 last:border-0 last:pb-0">
+                        <div className="flex items-center">
+                          <div className={`w-2 h-2 rounded-full mr-3 ${
+                            task.priority === 'high' ? 'bg-red-500' : 
+                            task.priority === 'medium' ? 'bg-amber-500' : 'bg-blue-500'
+                          }`}></div>
+                          <div>
+                            <div className="flex items-center gap-2">
+                              <p className="font-medium">{task.title}</p>
+                              {task.vertical && <VerticalTag vertical={task.vertical.type as VerticalType} />}
+                            </div>
+                            <div className="flex items-center text-xs text-muted-foreground mt-1">
+                              <Clock className="w-3 h-3 mr-1" />
+                              Due {task.dueDate}
+                            </div>
+                          </div>
+                        </div>
+                        <Button 
+                          variant="ghost" 
+                          size="sm"
+                          onClick={() => completeTask.mutate(task.id)}
+                        >
+                          {completeTask.isPending && task.id === completeTask.variables ? 'Completing...' : 'Complete'}
+                        </Button>
+                      </div>
+                    ))
+                  ) : (
+                    <div className="text-center py-6 text-muted-foreground">
+                      No priority tasks found
+                    </div>
+                  )}
+                </div>
+              )}
             </CardContent>
           </Card>
 
-          {/* Quick Links section - NEW */}
+          {/* Quick Links section */}
           <h2 className="text-lg font-medium mb-4 mt-6">Quick Links</h2>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            {quickLinks.map((link, index) => (
-              <Card key={index} className="cursor-pointer hover:shadow-md transition-shadow">
-                <CardContent className="p-4 flex flex-col items-center justify-center text-center">
-                  <div className="bg-accent p-3 rounded-full mb-2">
-                    <link.icon className="w-5 h-5" />
-                  </div>
-                  <h3 className="text-sm font-medium">{link.title}</h3>
-                </CardContent>
-              </Card>
-            ))}
+            {isLoading ? (
+              // Loading skeletons for quick links
+              Array(4).fill(0).map((_, index) => (
+                <Card key={index}>
+                  <CardContent className="p-4 flex flex-col items-center justify-center text-center">
+                    <Skeleton className="h-10 w-10 rounded-full mb-2" />
+                    <Skeleton className="h-4 w-20" />
+                  </CardContent>
+                </Card>
+              ))
+            ) : (
+              quickLinks?.map((link, index) => {
+                let IconComponent = FileText;
+                if (link.icon === 'LineChart') IconComponent = LineChart;
+                if (link.icon === 'Calendar') IconComponent = Calendar;
+                if (link.icon === 'Link') IconComponent = Link;
+                if (link.icon === 'User') IconComponent = User;
+                
+                return (
+                  <Card key={index} className="cursor-pointer hover:shadow-md transition-shadow">
+                    <CardContent className="p-4 flex flex-col items-center justify-center text-center">
+                      <div className="bg-accent p-3 rounded-full mb-2">
+                        <IconComponent className="w-5 h-5" />
+                      </div>
+                      <h3 className="text-sm font-medium">{link.title}</h3>
+                    </CardContent>
+                  </Card>
+                );
+              })
+            )}
           </div>
         </div>
 
         {/* Right column: Activity feed and Calendar */}
         <div>
-          {/* Mini Calendar - NEW */}
+          {/* Mini Calendar */}
           <h2 className="text-lg font-medium mb-4">Upcoming Deadlines</h2>
           <Card className="mb-6">
             <CardContent className="pt-6">
@@ -201,14 +233,14 @@ const Dashboard = () => {
                 mode="single"
                 selected={date}
                 onSelect={setDate}
-                className="rounded-md"
+                className="rounded-md border"
               />
             </CardContent>
           </Card>
-          
-          {/* Activity feed with filtering */}
-          <div className="flex justify-between items-center mb-4">
-            <h2 className="text-lg font-medium">Recent Activity</h2>
+
+          {/* Activity Feed */}
+          <div className="mb-4 flex justify-between items-center">
+            <h2 className="text-lg font-medium">Activity Feed</h2>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="outline" size="sm">
@@ -217,96 +249,85 @@ const Dashboard = () => {
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
-                <DropdownMenuItem onClick={() => setSelectedActivityType(null)}>
-                  All Types
+                <DropdownMenuItem
+                  onClick={() => setSelectedActivityType(null)}
+                  className={selectedActivityType === null ? 'bg-accent' : ''}
+                >
+                  All Activities
                 </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => setSelectedActivityType('task')}>
+                <DropdownMenuItem
+                  onClick={() => setSelectedActivityType('task')}
+                  className={selectedActivityType === 'task' ? 'bg-accent' : ''}
+                >
                   Tasks
                 </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => setSelectedActivityType('document')}>
+                <DropdownMenuItem
+                  onClick={() => setSelectedActivityType('document')}
+                  className={selectedActivityType === 'document' ? 'bg-accent' : ''}
+                >
                   Documents
                 </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => setSelectedActivityType('comment')}>
+                <DropdownMenuItem
+                  onClick={() => setSelectedActivityType('comment')}
+                  className={selectedActivityType === 'comment' ? 'bg-accent' : ''}
+                >
                   Comments
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => setSelectedActivityType('meeting')}>
-                  Meetings
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
           </div>
-          
-          <div className="mb-2 flex flex-wrap gap-2">
-            <Badge 
-              variant={selectedVertical === null ? 'default' : 'outline'} 
-              className="cursor-pointer"
-              onClick={() => setSelectedVertical(null)}
-            >
-              All Verticals
-            </Badge>
-            <Badge 
-              variant={selectedVertical === 'marketing' ? 'default' : 'outline'} 
-              className="cursor-pointer"
-              onClick={() => setSelectedVertical('marketing')}
-            >
-              Marketing
-            </Badge>
-            <Badge 
-              variant={selectedVertical === 'product' ? 'default' : 'outline'} 
-              className="cursor-pointer"
-              onClick={() => setSelectedVertical('product')}
-            >
-              Product
-            </Badge>
-            <Badge 
-              variant={selectedVertical === 'finance' ? 'default' : 'outline'} 
-              className="cursor-pointer"
-              onClick={() => setSelectedVertical('finance')}
-            >
-              Finance
-            </Badge>
-            <Badge 
-              variant={selectedVertical === 'development' ? 'default' : 'outline'} 
-              className="cursor-pointer"
-              onClick={() => setSelectedVertical('development')}
-            >
-              Development
-            </Badge>
-          </div>
-          
+
           <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-md">Activity Feed</CardTitle>
-              <CardDescription>Recent updates across projects</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <ScrollArea className="h-[300px]">
-                <div className="space-y-4">
-                  {filteredActivities.length > 0 ? (
-                    filteredActivities.map((activity) => (
-                      <div key={activity.id} className="flex items-start space-x-4 border-b border-border pb-4 last:border-0 last:pb-0">
-                        <div className="w-8 h-8 rounded-full bg-accent flex items-center justify-center flex-shrink-0">
+            <CardContent className="p-0">
+              <ScrollArea className="h-[420px]">
+                {isLoading ? (
+                  // Loading skeletons for activity feed
+                  <div className="p-4 space-y-4">
+                    {Array(5).fill(0).map((_, index) => (
+                      <div key={index} className="flex gap-3">
+                        <Skeleton className="h-8 w-8 rounded-full" />
+                        <div className="flex-1">
+                          <Skeleton className="h-4 w-full mb-2" />
+                          <Skeleton className="h-3 w-24" />
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : filteredActivities.length ? (
+                  <div className="p-4 space-y-4">
+                    {filteredActivities.map((activity) => (
+                      <div key={activity.id} className="flex items-start gap-3">
+                        <div className={`rounded-full p-2 ${
+                          activity.type === 'task' ? 'bg-blue-500/10 text-blue-500' :
+                          activity.type === 'document' ? 'bg-green-500/10 text-green-500' :
+                          activity.type === 'comment' ? 'bg-amber-500/10 text-amber-500' :
+                          'bg-gray-500/10 text-gray-500'
+                        }`}>
                           {activity.type === 'task' && <CheckCircle2 className="w-4 h-4" />}
-                          {activity.type === 'document' && <Calendar className="w-4 h-4" />}
+                          {activity.type === 'document' && <FileText className="w-4 h-4" />}
                           {activity.type === 'comment' && <MessageCircle className="w-4 h-4" />}
                           {activity.type === 'meeting' && <Users className="w-4 h-4" />}
                         </div>
                         <div>
-                          <div className="flex items-center gap-2 mb-0.5">
-                            <span className="font-medium">{activity.user}</span>
-                            <VerticalTag vertical={activity.vertical} />
+                          <div className="flex items-center gap-2">
+                            <p className="text-sm">{activity.message}</p>
+                            {activity.vertical && <VerticalTag vertical={activity.vertical as VerticalType} />}
                           </div>
-                          <p className="text-sm">{activity.message}</p>
-                          <p className="text-xs text-muted-foreground mt-1">{activity.time}</p>
+                          <div className="flex items-center gap-2 text-xs text-muted-foreground mt-1">
+                            <span>{activity.time}</span>
+                            <span>•</span>
+                            <span>{activity.user}</span>
+                          </div>
                         </div>
                       </div>
-                    ))
-                  ) : (
-                    <div className="text-center text-muted-foreground py-4">
-                      No activities match your filter criteria
-                    </div>
-                  )}
-                </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="flex flex-col items-center justify-center h-full p-6">
+                    <Bell className="w-8 h-8 text-muted-foreground mb-2" />
+                    <p className="text-center text-muted-foreground">No activity found</p>
+                  </div>
+                )}
               </ScrollArea>
             </CardContent>
           </Card>
