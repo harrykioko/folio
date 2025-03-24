@@ -12,11 +12,12 @@ export default function ProtectedRoute({
   children, 
   requireAdmin = false 
 }: ProtectedRouteProps) {
-  const { user, session, isLoading, profile, refreshSession, isAdmin } = useAuth();
+  const { user, session, isLoading, refreshSession, isAdmin } = useAuth();
   const location = useLocation();
   const { toast } = useToast();
   const [redirectTo, setRedirectTo] = useState<string | null>(null);
 
+  // Session refresh effect - only handles token refresh, not profile loading
   useEffect(() => {
     let isMounted = true;
 
@@ -54,8 +55,9 @@ export default function ProtectedRoute({
   useEffect(() => {
     if (!user || isLoading) return;
 
-    // Check profile completeness
-    if (user && !profile && location.pathname !== '/settings') {
+    // Check profile completeness - this is now handled by useAuth() internally
+    // so we only need to check the profile value
+    if (user && !user.app_metadata?.profile_complete && location.pathname !== '/settings') {
       toast({
         title: 'Profile not complete',
         description: 'Please complete your profile to continue.',
@@ -75,7 +77,7 @@ export default function ProtectedRoute({
       setRedirectTo('/dashboard');
       return;
     }
-  }, [user, profile, isAdmin, requireAdmin, location.pathname, toast, isLoading]);
+  }, [user, requireAdmin, location.pathname, toast, isLoading, isAdmin]);
 
   // If authentication is still loading, show a minimal loading state
   if (isLoading) {
