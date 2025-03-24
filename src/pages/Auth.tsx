@@ -1,7 +1,7 @@
-import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useState, useEffect } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { Eye, EyeOff, ArrowRight } from 'lucide-react';
-import { signIn, signUp } from '../lib/supabase';
+import { useAuth } from '@/hooks/use-auth';
 import { useToast } from '../hooks/use-toast';
 import BackgroundElements from '@/components/landing/BackgroundElements';
 import ThemeToggle from '@/components/landing/ThemeToggle';
@@ -15,11 +15,23 @@ export default function Auth() {
   const [isSignIn, setIsSignIn] = useState(true);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [firstName, setFirstName] = useState('');
+  const [lastName, setLastName] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   
   const navigate = useNavigate();
+  const location = useLocation();
   const { toast } = useToast();
+  const { signIn, signUp, user } = useAuth();
+  
+  // Redirect to dashboard if already logged in
+  useEffect(() => {
+    if (user) {
+      const from = location.state?.from?.pathname || '/dashboard';
+      navigate(from, { replace: true });
+    }
+  }, [user, navigate, location]);
   
   const handleAuth = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -27,8 +39,8 @@ export default function Auth() {
     
     try {
       if (isSignIn) {
-        const { data, error } = await signIn(email, password);
-        if (error) throw error;
+        const { success, error } = await signIn(email, password);
+        if (!success) throw error;
         
         // Success
         toast({
@@ -37,8 +49,8 @@ export default function Auth() {
         });
         navigate('/dashboard');
       } else {
-        const { data, error } = await signUp(email, password);
-        if (error) throw error;
+        const { success, error } = await signUp(email, password, firstName, lastName);
+        if (!success) throw error;
         
         // Success
         toast({
@@ -50,7 +62,7 @@ export default function Auth() {
     } catch (error: any) {
       toast({
         title: 'Authentication error',
-        description: error.message || 'Something went wrong. Please try again.',
+        description: error?.message || 'Something went wrong. Please try again.',
         variant: 'destructive',
       });
     } finally {
@@ -99,16 +111,58 @@ export default function Auth() {
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="name@example.com"
-                  required
                   className="w-full px-4 py-2 bg-white/15 dark:bg-black/30 backdrop-blur-md border border-white/30 dark:border-white/10 rounded-lg focus:ring-2 focus:ring-primary/50 text-foreground"
+                  required
                 />
               </div>
             </div>
             
+            {!isSignIn && (
+              <>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="firstName" className="text-sm font-medium block text-foreground">
+                      First Name
+                    </Label>
+                    <Input
+                      id="firstName"
+                      type="text"
+                      value={firstName}
+                      onChange={(e) => setFirstName(e.target.value)}
+                      placeholder="John"
+                      className="w-full px-4 py-2 bg-white/15 dark:bg-black/30 backdrop-blur-md border border-white/30 dark:border-white/10 rounded-lg focus:ring-2 focus:ring-primary/50 text-foreground"
+                      required={!isSignIn}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="lastName" className="text-sm font-medium block text-foreground">
+                      Last Name
+                    </Label>
+                    <Input
+                      id="lastName"
+                      type="text"
+                      value={lastName}
+                      onChange={(e) => setLastName(e.target.value)}
+                      placeholder="Doe"
+                      className="w-full px-4 py-2 bg-white/15 dark:bg-black/30 backdrop-blur-md border border-white/30 dark:border-white/10 rounded-lg focus:ring-2 focus:ring-primary/50 text-foreground"
+                      required={!isSignIn}
+                    />
+                  </div>
+                </div>
+              </>
+            )}
+            
             <div className="space-y-2">
-              <Label htmlFor="password" className="text-sm font-medium block text-foreground">
-                Password
-              </Label>
+              <div className="flex justify-between">
+                <Label htmlFor="password" className="text-sm font-medium block text-foreground">
+                  Password
+                </Label>
+                {isSignIn && (
+                  <Link to="/reset-password" className="text-sm text-primary/90 hover:text-primary transition-colors">
+                    Forgot password?
+                  </Link>
+                )}
+              </div>
               <div className="relative">
                 <Input
                   id="password"
@@ -116,8 +170,9 @@ export default function Auth() {
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="••••••••"
-                  required
                   className="w-full px-4 py-2 bg-white/15 dark:bg-black/30 backdrop-blur-md border border-white/30 dark:border-white/10 rounded-lg pr-10 focus:ring-2 focus:ring-primary/50 text-foreground"
+                  required
+                  minLength={6}
                 />
                 <button
                   type="button"
@@ -128,14 +183,6 @@ export default function Auth() {
                 </button>
               </div>
             </div>
-            
-            {isSignIn && (
-              <div className="text-right">
-                <Link to="/reset-password" className="text-sm text-primary/90 hover:text-primary transition-colors">
-                  Forgot password?
-                </Link>
-              </div>
-            )}
             
             <Button
               type="submit"
