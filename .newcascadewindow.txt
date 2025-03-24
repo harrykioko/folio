@@ -1,0 +1,3 @@
+.newcascadewindow
+## Copy the below and past into the new Cascade window 
+Open the Folio project and acquaint yourself with the existing structure and project progress. Comply with all Global Rules and memories, and refer to the files in the project_knowledge document for reference if needed. 
