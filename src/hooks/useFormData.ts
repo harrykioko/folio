@@ -4,6 +4,7 @@ import { handlePolicyError, PolicyError } from '@/types/errors';
 import { useToast } from '@/hooks/use-toast';
 import React, { useCallback } from 'react';
 import debounce from 'lodash/debounce';
+import { useRequestQueue } from '@/utils/requestQueue';
 
 interface UseFormDataOptions<TData> {
   table: string;
@@ -13,13 +14,14 @@ interface UseFormDataOptions<TData> {
   onSuccess?: (data: TData) => void;
   onError?: (error: PolicyError) => void;
   staleTime?: number; // Time in milliseconds before data is considered stale
-  cacheTime?: number; // Time in milliseconds before data is removed from cache
+  gcTime?: number; // Time in milliseconds before data is removed from cache
   debounceMs?: number; // Time in milliseconds to debounce updates
+  maxConcurrent?: number; // Maximum number of concurrent requests
 }
 
 /**
  * A custom hook for managing form data with Supabase integration and policy-aware error handling.
- * Includes performance optimizations like query caching and request debouncing.
+ * Includes performance optimizations like query caching, request debouncing, and request queuing.
  * 
  * @template TData - The type of data being managed, must extend Record<string, unknown>
  * 
@@ -31,8 +33,9 @@ interface UseFormDataOptions<TData> {
  * @param {function} [options.onSuccess] - Callback for successful operations
  * @param {function} [options.onError] - Callback for error handling
  * @param {number} [options.staleTime=30000] - Time before data is considered stale (30s default)
- * @param {number} [options.cacheTime=300000] - Time before data is removed from cache (5m default)
+ * @param {number} [options.gcTime=300000] - Time before data is removed from cache (5m default)
  * @param {number} [options.debounceMs=1000] - Time to debounce updates (1s default)
+ * @param {number} [options.maxConcurrent=3] - Maximum number of concurrent requests
  * 
  * @returns {Object} An object containing:
  * - data: The fetched/updated data
@@ -41,9 +44,10 @@ interface UseFormDataOptions<TData> {
  * - update: Debounced function to update the data
  * - isUpdating: Loading state for updates
  * - updateError: Any error that occurred during update
+ * - queueStats: Statistics about the request queue
  * 
  * @example
- * See useFormData.example.tsx for a complete usage example with PolicyAwareForm
+ * See examples/useFormDataExample.tsx for a complete usage example with PolicyAwareForm
  */
 export function useFormData<TData extends Record<string, unknown>>({
   table,
@@ -53,38 +57,43 @@ export function useFormData<TData extends Record<string, unknown>>({
   onSuccess,
   onError,
   staleTime = 30000, // 30 seconds
-  cacheTime = 300000, // 5 minutes
-  debounceMs = 1000 // 1 second
+  gcTime = 300000, // 5 minutes
+  debounceMs = 1000, // 1 second
+  maxConcurrent = 3
 }: UseFormDataOptions<TData>) {
   const queryClient = useQueryClient();
   const { toast } = useToast();
+  const requestQueue = useRequestQueue<TData>(maxConcurrent);
 
   // Query for fetching form data with caching
   const { data, isLoading, error } = useQuery<TData, PolicyError>({
     queryKey: [table, id],
     queryFn: async () => {
-      try {
-        let query = supabase
-          .from(table)
-          .select(select);
+      const result = await requestQueue.enqueue(async () => {
+        try {
+          let query = supabase
+            .from(table)
+            .select(select);
 
-        if (id) {
-          query = query.eq('id', id);
+          if (id) {
+            query = query.eq('id', id);
+          }
+
+          const { data: result, error } = await query.single();
+
+          if (error) throw handlePolicyError(error);
+          return result as unknown as TData;
+        } catch (error) {
+          const policyError = handlePolicyError(error);
+          onError?.(policyError);
+          throw policyError;
         }
-
-        const { data: result, error } = await query.single();
-
-        if (error) throw handlePolicyError(error);
-        return result as unknown as TData;
-      } catch (error) {
-        const policyError = handlePolicyError(error);
-        onError?.(policyError);
-        throw policyError;
-      }
+      });
+      return result;
     },
     enabled: enabled && !!id,
     staleTime,
-    cacheTime,
+    gcTime,
     retry: 2, // Retry failed requests twice
     retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000) // Exponential backoff
   });
@@ -99,31 +108,36 @@ export function useFormData<TData extends Record<string, unknown>>({
   // Create a debounced update function
   const debouncedUpdate = useCallback(
     debounce(async (formData: TData) => {
-      try {
-        const { data: result, error } = await supabase
-          .from(table)
-          .update(formData)
-          .eq('id', id)
-          .select()
-          .single();
+      const result = await requestQueue.enqueue(async () => {
+        try {
+          const { data: result, error } = await supabase
+            .from(table)
+            .update(formData)
+            .eq('id', id)
+            .select()
+            .single();
 
-        if (error) throw handlePolicyError(error);
-        
-        // Update cache immediately for optimistic updates
-        queryClient.setQueryData([table, id], result as unknown as TData);
-        
-        onSuccess?.(result as unknown as TData);
-      } catch (error) {
-        const policyError = handlePolicyError(error);
-        onError?.(policyError);
-        toast({
-          title: 'Error',
-          description: policyError.message,
-          variant: 'destructive'
-        });
-      }
+          if (error) throw handlePolicyError(error);
+          
+          // Update cache immediately for optimistic updates
+          queryClient.setQueryData([table, id], result as unknown as TData);
+          
+          onSuccess?.(result as unknown as TData);
+          return result as unknown as TData;
+        } catch (error) {
+          const policyError = handlePolicyError(error);
+          onError?.(policyError);
+          toast({
+            title: 'Error',
+            description: policyError.message,
+            variant: 'destructive'
+          });
+          throw policyError;
+        }
+      });
+      return result;
     }, debounceMs),
-    [table, id, queryClient, onSuccess, onError, toast]
+    [table, id, queryClient, onSuccess, onError, toast, requestQueue]
   );
 
   // Mutation for handling updates
@@ -150,62 +164,10 @@ export function useFormData<TData extends Record<string, unknown>>({
     error,
     update: mutation.mutate,
     isUpdating: mutation.isPending,
-    updateError: mutation.error
+    updateError: mutation.error,
+    queueStats: {
+      pending: requestQueue.getPendingCount(),
+      active: requestQueue.getActiveCount()
+    }
   };
-}
-
-/**
- * Example usage:
- * 
- * interface ProfileFormData {
- *   fullName: string;
- *   bio: string;
- *   email: string;
- *   phone?: string;
- *   location?: string;
- *   website?: string;
- * }
- * 
- * function ProfileForm() {
- *   const { data, isLoading, update, isUpdating } = useFormData<ProfileFormData>({
- *     table: 'profiles',
- *     id: userId,
- *     select: 'full_name, bio, email, phone, location, website',
- *     onSuccess: (data) => {
- *       // Handle success
- *     },
- *     onError: (error) => {
- *       // Handle error
- *     }
- *   });
- * 
- *   if (isLoading) return <div>Loading...</div>;
- * 
- *   return (
- *     <PolicyAwareForm<ProfileFormData>
- *       onSubmit={update}
- *       isSubmitting={isUpdating}
- *       initialData={data}
- *     >
- *       <input
- *         type="text"
- *         name="fullName"
- *         defaultValue={data?.fullName}
- *         placeholder="Full Name"
- *       />
- *       <textarea
- *         name="bio"
- *         defaultValue={data?.bio}
- *         placeholder="Bio"
- *       />
- *       <input
- *         type="email"
- *         name="email"
- *         defaultValue={data?.email}
- *         placeholder="Email"
- *       />
- *       {/* ... other fields ... */}
- *     </PolicyAwareForm>
- *   );
- * }
- */ 
+} 
