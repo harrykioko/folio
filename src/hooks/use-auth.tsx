@@ -73,124 +73,86 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   // Computed property for admin status
   const isAdmin = state.profile?.role === 'admin';
 
-  // Fetch profile with retry logic
-  const fetchProfile = async (userId: string, retryCount = 0) => {
+  // Fetch user profile function
+  const fetchProfile = async (userId: string) => {
     try {
-      console.log('Fetching profile for user:', userId);
-      
-      // Try to get existing profile using RPC function to bypass RLS
-      const { data, error } = await supabase.rpc(
-        'get_user_profile', 
-        { user_id: userId }
-      );
-      
-      if (error) {
-        console.error('Error fetching profile:', error);
+      // First try using the RPC function if it exists
+      try {
+        const { data, error } = await supabase.rpc('get_user_profile', { user_id: userId });
         
-        // Create new profile if none exists using RPC
-        if ((error.code === 'PGRST116' || error.message.includes('no rows')) && retryCount < 3) {
-          const { data: authUser } = await supabase.auth.getUser();
-          const user = authUser?.user;
-          const userMeta = user?.user_metadata || {};
-          
-          const defaultProfile = {
-            id: userId,
-            first_name: userMeta.first_name || user?.email?.split('@')[0] || 'User',
-            last_name: userMeta.last_name || '',
-            role: 'member',
-            created_at: new Date().toISOString(),
-          };
-          
-          console.log('Creating new profile with data:', defaultProfile);
-          
-          const { data: rpcResult, error: rpcError } = await supabase.rpc(
-            'create_user_profile',
-            { profile_data: defaultProfile }
-          );
-          
-          if (rpcError) {
-            console.error('RPC error creating profile:', rpcError);
-            
-            if (retryCount < 2) {
-              setTimeout(() => fetchProfile(userId, retryCount + 1), 1000 * Math.pow(2, retryCount));
-              return;
-            } else {
-              toast({
-                title: "Error creating user profile",
-                description: "Please contact support.",
-                variant: "destructive"
-              });
-            }
-          } else {
-            console.log('Successfully created profile via RPC:', rpcResult);
-            setState(prev => ({ ...prev, profile: rpcResult, isLoading: false }));
-            return;
-          }
+        if (error) throw error;
+        
+        if (data) {
+          setState(prev => ({ ...prev, profile: data, isLoading: false }));
+          return;
         }
-        
-        setState(prev => ({ ...prev, isLoading: false }));
-        return;
+      } catch (rpcError: any) {
+        // If the RPC function doesn't exist yet, fall back to direct query
+        console.log('Falling back to direct query for profile:', rpcError.message);
       }
 
-      console.log('Successfully fetched profile:', data);
-      setState(prev => ({ ...prev, profile: data, isLoading: false }));
+      // Direct query fallback
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', userId)
+        .single();
 
+      if (error) throw error;
+      
+      setState(prev => ({ ...prev, profile: data, isLoading: false }));
+      
+      // Check if user is admin for authorization
+      if (data?.role === 'admin') {
+        setState(prev => ({ ...prev, isAdmin: true }));
+      }
     } catch (error) {
-      console.error('Error in fetchProfile:', error);
-      setState(prev => ({ ...prev, isLoading: false }));
+      console.error('Error fetching profile:', error);
+      setState(prev => ({ ...prev, isLoading: false, error }));
     }
   };
 
-  // Fetch company settings with retry logic
-  const fetchCompanySettings = async (retryCount = 0) => {
+  // Fetch company settings
+  const fetchCompanySettings = async () => {
     try {
-      const { data, error } = await supabase
+      // Try to get global company settings (not user-specific)
+      let query = supabase
         .from('company_settings')
-        .select('*')
-        .eq('user_id', state.user?.id)
-        .single();
-
-      if (error) {
-        // PGRST116 is a "no rows returned" error, which is expected if no company settings exist yet
-        if (error.code !== 'PGRST116') {
-          console.error('Error fetching company settings:', error);
-        } else if (retryCount < 1) {
-          // If no company settings exist, create default ones
-          const defaultSettings = {
-            user_id: state.user?.id,
-            company_name: 'Folio',
-            created_at: new Date().toISOString(),
-            updated_at: new Date().toISOString(),
-          };
-          
-          console.log('Attempting to create default company settings:', defaultSettings);
-          
-          const { data: newSettings, error: insertError } = await supabase
+        .select('*');
+      
+      // First try to get any company settings
+      const { data, error } = await query.limit(1).single();
+      
+      if (error && error.code !== 'PGRST116') { // Not "Results contain 0 rows"
+        throw error;
+      }
+      
+      if (data) {
+        setState(prev => ({ ...prev, companySettings: data }));
+      } else {
+        // If no company settings exist and the user is an admin, create default settings
+        if (state.isAdmin) {
+          const { data: newSettings, error: createError } = await supabase
             .from('company_settings')
-            .insert(defaultSettings)
+            .insert({
+              company_name: 'My Company',
+              logo_url: null,
+              primary_color: '#4f46e5',
+              contact_email: state.user?.email || '',
+              created_by: state.user?.id,
+              updated_by: state.user?.id,
+              user_id: state.user?.id // Add user_id to match schema
+            })
             .select()
             .single();
-            
-          if (insertError) {
-            console.error('Error creating default company settings:', insertError);
-          } else {
-            console.log('Created default company settings', newSettings);
-            setState(prev => ({ ...prev, companySettings: newSettings, isLoading: false }));
-            return;
-          }
+          
+          if (createError) throw createError;
+          
+          setState(prev => ({ ...prev, companySettings: newSettings }));
         }
-        setState(prev => ({ ...prev, isLoading: false }));
-        return;
       }
-
-      setState(prev => ({ 
-        ...prev, 
-        companySettings: data,
-        isLoading: false,
-      }));
     } catch (error) {
       console.error('Error fetching company settings:', error);
-      setState(prev => ({ ...prev, isLoading: false }));
     }
   };
 
