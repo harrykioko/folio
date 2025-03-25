@@ -1,0 +1,135 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+Technology Stack Definition (UNCHANGEABLE)
+
+Frontend Framework: React ONLY
+
+Version: React 18+
+Build Tool: Vite (modern, fast build system for React)
+Routing: React Router v6+ for all application routing
+Component Pattern: Functional components with hooks
+
+
+State Management
+
+Global State: Redux Toolkit exclusively
+Local Component State: React's useState and useReducer hooks
+Server State: React Query (TanStack Query) for all API calls
+
+
+Styling System
+
+Primary: Tailwind CSS only
+Component Organization: Component-based CSS following BEM methodology
+No styled-components, Emotion, or other CSS-in-JS libraries
+
+
+Backend Services
+
+Database: Supabase PostgreSQL exclusively
+Authentication: Supabase Auth with multi-factor authentication
+Storage: Supabase Storage for files, S3 only when required for specific use cases
+Real-time Features: Supabase Realtime exclusively
+
+
+API Architecture
+
+RESTful API patterns for all endpoints
+GraphQL is explicitly prohibited unless specifically requested
+Use of Supabase client for database operations
+
+
+
+Documentation Reference and Update Protocol
+
+Mandatory Documentation Reference
+
+All development must begin by consulting the project_knowledge folder
+Key documents to reference first:
+
+tech_stack_document.md
+implementation_plan.md
+frontend_guidelines_document.md
+backend_structure_document.md
+
+
+
+
+Documentation Update Process
+
+When changes to the technology stack are approved:
+
+Update tech_stack_document.md first
+Then update all dependent documents to maintain consistency
+Highlight all changes in a separate section titled "Recent Updates"
+Include date and rationale for all changes
+
+
+Never implement technology choices that contradict documentation without updating the documentation first
+
+
+Version Control for Documentation
+
+All documentation changes must be versioned
+Include a version history at the bottom of each document
+Format: v1.0.1 - YYYY-MM-DD - Change description
+
+
+
+Implementation Rules for React with Vite
+
+Project Structure (Mandatory)
+Copysrc/
+  components/           # Reusable UI components
+    ui/                 # Base UI components 
+    [feature]/          # Feature-specific components
+  pages/                # Page components (routing targets)
+  routes/               # React Router configuration
+  store/                # Redux store setup
+  hooks/                # Custom React hooks
+  services/             # API and service integrations
+  utils/                # Utility functions
+  assets/               # Static assets
+  styles/               # Global styles
+
+Component Patterns
+
+Use functional components with hooks
+Always use TypeScript with strict type checking
+Follow the Container/Presentation pattern
+Keep components focused and under 300 lines
+
+
+Data Fetching
+
+Use React Query with Supabase client
+Implement proper error handling and loading states
+Create custom hooks for reusable data operations
+
+
+Routing Standards
+
+Use React Router for all routing
+Implement lazy loading for route components
+Use proper route protection for authenticated routes
+
+
+Build and Deployment
+
+Use Vite's built-in optimization features
+Implement code splitting for better performance
+Configure proper environment variables for different deployment targets
+
+
+
+Prohibited Practices (NEVER IMPLEMENT)
+
+Framework Mixing
+
+NEVER suggest or implement alternative frameworks (Vue, Angular, Svelte, etc.)
+NEVER mix different React-based meta-frameworks (Next.js, Gatsby, Remix, etc.)
+NEVER switch build tools without explicit approval and documentation updates
+NEVER overwrite my .env file without first asking and receiving approval

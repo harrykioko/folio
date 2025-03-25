@@ -1,0 +1,12 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+
+# Your rule content
+
+- when implementing any backend functionality, refer to the best practices described in the following documents and adhere to the database schema described
+- [backend_structure_document.md](mdc:project_knowledge/backend_structure_document.md)
+- [database_schema_document.md](mdc:project_knowledge/database_schema_document.md)
+- [supabase-best-practices.md](mdc:project_knowledge/supabase-best-practices.md)
