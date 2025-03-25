@@ -96,6 +96,18 @@ async function verifyMigration() {
       console.log('\n✅ is_admin function working');
     }
 
+    // Create a test project
+    const { data: project, error: projectError } = await supabase
+      .from('projects')
+      .insert({
+        name: 'Test Project',
+        description: 'Test project for verification',
+        status: 'active',
+        created_by: '00000000-0000-0000-0000-000000000000'
+      })
+      .select()
+      .single();
+
     console.log('\nVerification complete!');
     
   } catch (error) {

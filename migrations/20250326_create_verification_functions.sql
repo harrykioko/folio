@@ -101,4 +101,87 @@ $$;
 GRANT EXECUTE ON FUNCTION public.get_policies TO authenticated;
 GRANT EXECUTE ON FUNCTION public.get_indexes TO authenticated;
 GRANT EXECUTE ON FUNCTION public.get_functions TO authenticated;
-GRANT EXECUTE ON FUNCTION public.get_permissions TO authenticated; 
+GRANT EXECUTE ON FUNCTION public.get_permissions TO authenticated;
+
+-- Create verification functions table
+CREATE TABLE IF NOT EXISTS public.verification_functions (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    name VARCHAR(255) NOT NULL UNIQUE,
+    description TEXT,
+    function_type VARCHAR(50) NOT NULL,
+    parameters JSONB NOT NULL DEFAULT '{}'::jsonb,
+    return_type VARCHAR(50) NOT NULL,
+    implementation TEXT NOT NULL,
+    is_active BOOLEAN NOT NULL DEFAULT true,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    created_by UUID NOT NULL REFERENCES auth.users(id),
+    last_modified_by UUID NOT NULL REFERENCES auth.users(id)
+);
+
+-- Create indexes
+CREATE INDEX IF NOT EXISTS idx_verification_functions_name ON public.verification_functions(name);
+CREATE INDEX IF NOT EXISTS idx_verification_functions_type ON public.verification_functions(function_type);
+CREATE INDEX IF NOT EXISTS idx_verification_functions_created_by ON public.verification_functions(created_by);
+CREATE INDEX IF NOT EXISTS idx_verification_functions_last_modified_by ON public.verification_functions(last_modified_by);
+
+-- Enable Row Level Security
+ALTER TABLE public.verification_functions ENABLE ROW LEVEL SECURITY;
+
+-- Create RLS policies
+CREATE POLICY "Users can view active verification functions"
+    ON public.verification_functions
+    FOR SELECT
+    USING (is_active = true);
+
+CREATE POLICY "Service role can manage verification functions"
+    ON public.verification_functions
+    USING (auth.jwt() ->> 'role' = 'service_role');
+
+-- Create updated_at trigger
+CREATE TRIGGER set_verification_functions_updated_at
+    BEFORE UPDATE ON public.verification_functions
+    FOR EACH ROW
+    EXECUTE FUNCTION public.set_updated_at();
+
+-- Create function to register a verification function
+CREATE OR REPLACE FUNCTION register_verification_function(
+    p_name VARCHAR,
+    p_description TEXT,
+    p_function_type VARCHAR,
+    p_parameters JSONB,
+    p_return_type VARCHAR,
+    p_implementation TEXT
+) RETURNS UUID
+LANGUAGE plpgsql
+SECURITY DEFINER
+AS $$
+DECLARE
+    v_id UUID;
+BEGIN
+    INSERT INTO public.verification_functions (
+        name,
+        description,
+        function_type,
+        parameters,
+        return_type,
+        implementation,
+        created_by,
+        last_modified_by
+    ) VALUES (
+        p_name,
+        p_description,
+        p_function_type,
+        p_parameters,
+        p_return_type,
+        p_implementation,
+        auth.uid(),
+        auth.uid()
+    ) RETURNING id INTO v_id;
+    
+    RETURN v_id;
+END;
+$$;
+
+-- Grant execute permissions
+GRANT EXECUTE ON FUNCTION register_verification_function TO authenticated; 

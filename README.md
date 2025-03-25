@@ -1,4 +1,3 @@
-
 # Folio - Unified Management Platform
 
 ## Project Overview
@@ -38,9 +37,15 @@ The platform is designed to reduce administrative overhead by centralizing infor
 Folio is built on a modern technology stack:
 
 - **Frontend**: React with TypeScript, leveraging shadcn/ui components and Tailwind CSS
-- **Backend**: Supabase providing PostgreSQL database, authentication, and serverless functions
+- **Backend**: Remote Supabase instance providing:
+  - PostgreSQL database with Row Level Security (RLS)
+  - Built-in authentication and authorization
+  - File storage for documents and assets
+  - Real-time capabilities for collaborative features
+  - Serverless functions for custom backend logic
 - **Infrastructure**: Cloud-hosted with CI/CD pipelines for seamless deployment
 - **Security**: JWT authentication, role-based access control, and comprehensive audit logging
+- **Database Management**: Migrations applied through Supabase Dashboard SQL Editor
 
 ## Project Structure
 

@@ -1,4 +1,3 @@
-
 # Folio - Architecture Documentation
 
 ## Overview
@@ -58,19 +57,28 @@ The application follows these data flow patterns:
 
 ### Supabase as Backend Service
 
-Supabase provides a comprehensive backend solution with:
+We utilize a remote Supabase instance as our primary backend service, providing:
 
-- **PostgreSQL Database**: Robust, relational data storage
+- **PostgreSQL Database**: Robust, relational data storage with Row Level Security (RLS)
 - **Authentication**: User management with various auth providers
 - **Storage**: File storage for documents and assets
 - **Realtime**: Live data updates for collaborative features
 - **Edge Functions**: Serverless functions for custom backend logic
 
+### Database Management Strategy
+
+Our database management approach is streamlined through the Supabase Dashboard:
+
+- **Migration Management**: All database changes are applied through the Supabase Dashboard SQL Editor
+- **Version Control**: Migration files are maintained in the `migrations/` directory
+- **Security**: RLS policies are enforced at the database level
+- **Backup & Recovery**: Leveraging Supabase's built-in backup capabilities
+
 ### Integration Approach
 
 The frontend connects to Supabase through:
 
-- **Supabase Client**: Direct connection to the Supabase API
+- **Supabase Client**: Direct connection to the remote Supabase API
 - **Custom Hooks**: Wrapping Supabase functionality in reusable React hooks
 - **TypeScript Types**: Generated database types for type-safe queries
 - **Row-Level Security**: Fine-grained access control at the database level
