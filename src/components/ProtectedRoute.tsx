@@ -1,10 +1,12 @@
-import { ReactNode, useEffect, useState } from "react";
-import { Navigate, Outlet, useLocation } from "react-router-dom";
-import { useAuth } from "@/hooks/use-auth";
-import { useToast } from "@/components/ui/use-toast";
+import React, { useEffect, useState } from 'react';
+import { Navigate, Outlet, useLocation } from 'react-router-dom';
+import { useAuth } from '@/hooks/use-auth';
+import { useToast } from '@/hooks/use-toast';
+import { PolicyErrorBoundary } from './PolicyErrorBoundary';
+import { PolicyAccessDeniedError } from '@/types/errors';
 
 interface ProtectedRouteProps {
-  children?: ReactNode;
+  children?: React.ReactNode;
   requireAdmin?: boolean;
 }
 
@@ -14,56 +16,22 @@ export default function ProtectedRoute({
 }: ProtectedRouteProps) {
   const { user, session, isLoading, refreshSession, isAdmin } = useAuth();
   const location = useLocation();
-  const { toast } = useToast();
   const [redirectTo, setRedirectTo] = useState<string | null>(null);
+  const { toast } = useToast();
 
-  // Session refresh effect - only handles token refresh, not profile loading
+  // Handle session refresh
   useEffect(() => {
-    let isMounted = true;
-    let refreshTimeout: NodeJS.Timeout | null = null;
+    if (session?.expires_at) {
+      const expiresAt = new Date(session.expires_at).getTime();
+      const now = Date.now();
+      const timeUntilExpiry = expiresAt - now;
 
-    const checkAuth = async () => {
-      if (!isMounted) return;
-      
-      // Only check session validity if we have both user and session
-      if (user && session) {
-        const expiresAt = session.expires_at;
-        if (expiresAt) {
-          const expiryTime = new Date(expiresAt * 1000);
-          const now = new Date();
-          const thirtyMinutesFromNow = new Date(now.getTime() + 30 * 60 * 1000);
-          
-          // Only refresh if session is about to expire
-          if (expiryTime < thirtyMinutesFromNow) {
-            try {
-              await refreshSession();
-            } catch (error) {
-              console.error("Failed to refresh session:", error);
-            }
-          } else {
-            // Schedule the next refresh check
-            const timeUntilRefresh = Math.max(
-              0, 
-              expiryTime.getTime() - thirtyMinutesFromNow.getTime()
-            );
-            
-            // Set a timeout to refresh before expiry (minimum 1 minute)
-            const delayMs = Math.max(60000, timeUntilRefresh);
-            refreshTimeout = setTimeout(checkAuth, delayMs);
-          }
-        }
+      // Refresh if less than 5 minutes until expiry
+      if (timeUntilExpiry < 5 * 60 * 1000) {
+        refreshSession();
       }
-    };
-
-    checkAuth();
-
-    return () => {
-      isMounted = false;
-      if (refreshTimeout) {
-        clearTimeout(refreshTimeout);
-      }
-    };
-  }, [user?.id, session?.expires_at]);
+    }
+  }, [session?.expires_at, refreshSession]);
 
   // Check profile and admin status in a separate effect with careful dependency management
   useEffect(() => {
@@ -86,9 +54,10 @@ export default function ProtectedRoute({
 
     // Check admin access
     if (requireAdmin && !isAdmin) {
+      const error = new PolicyAccessDeniedError('You don\'t have permission to access this page.');
       toast({
         title: 'Access denied',
-        description: 'You don\'t have permission to access this page.',
+        description: error.message,
         variant: 'destructive'
       });
       setRedirectTo('/dashboard');
@@ -124,5 +93,10 @@ export default function ProtectedRoute({
   }
 
   // If authenticated and has required role, render the children or outlet
-  return children ? <>{children}</> : <Outlet />;
+  // Wrap with PolicyErrorBoundary for policy-related error handling
+  return (
+    <PolicyErrorBoundary>
+      {children ? <>{children}</> : <Outlet />}
+    </PolicyErrorBoundary>
+  );
 }
