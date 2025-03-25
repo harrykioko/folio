@@ -3,6 +3,8 @@ import { Navigate, Outlet, useLocation } from 'react-router-dom';
 import { useAuth } from '@/hooks/use-auth';
 import { useToast } from '@/hooks/use-toast';
 import { PolicyErrorBoundary } from './PolicyErrorBoundary';
+import { AuthErrorBoundary } from './AuthErrorBoundary';
+import { AuthLoadingState } from './ui/AuthLoadingState';
 import { PolicyAccessDeniedError } from '@/types/errors';
 
 interface ProtectedRouteProps {
@@ -72,13 +74,9 @@ export default function ProtectedRoute({
     isLoading
   ]);
 
-  // If authentication is still loading, show a minimal loading state
+  // If authentication is still loading, show the loading state
   if (isLoading) {
-    return (
-      <div className="flex h-screen w-screen items-center justify-center">
-        <div className="animate-spin h-8 w-8 border-t-2 border-b-2 border-blue-500 rounded-full"></div>
-      </div>
-    );
+    return <AuthLoadingState message="Checking authentication..." />;
   }
 
   // Redirect to auth page if not authenticated
@@ -93,10 +91,12 @@ export default function ProtectedRoute({
   }
 
   // If authenticated and has required role, render the children or outlet
-  // Wrap with PolicyErrorBoundary for policy-related error handling
+  // Wrap with both error boundaries for comprehensive error handling
   return (
-    <PolicyErrorBoundary>
-      {children ? <>{children}</> : <Outlet />}
-    </PolicyErrorBoundary>
+    <AuthErrorBoundary>
+      <PolicyErrorBoundary>
+        {children ? <>{children}</> : <Outlet />}
+      </PolicyErrorBoundary>
+    </AuthErrorBoundary>
   );
 }

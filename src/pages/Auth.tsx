@@ -10,6 +10,8 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Form, FormField, FormItem, FormLabel, FormControl } from '@/components/ui/form';
 import { Button } from '@/components/ui/button';
+import { AuthLoadingState } from '@/components/ui/AuthLoadingState';
+import { AuthError } from '@/types/errors';
 
 export default function Auth() {
   const [isSignIn, setIsSignIn] = useState(true);
@@ -19,6 +21,7 @@ export default function Auth() {
   const [lastName, setLastName] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   
   const navigate = useNavigate();
   const location = useLocation();
@@ -36,11 +39,12 @@ export default function Auth() {
   const handleAuth = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
+    setError(null);
     
     try {
       if (isSignIn) {
         const { success, error } = await signIn(email, password);
-        if (!success) throw error;
+        if (!success) throw new AuthError(error?.message || 'Failed to sign in');
         
         // Success
         toast({
@@ -50,7 +54,7 @@ export default function Auth() {
         navigate('/dashboard');
       } else {
         const { success, error } = await signUp(email, password, firstName, lastName);
-        if (!success) throw error;
+        if (!success) throw new AuthError(error?.message || 'Failed to sign up');
         
         // Success
         toast({
@@ -60,15 +64,20 @@ export default function Auth() {
         setIsSignIn(true);
       }
     } catch (error: any) {
+      setError(error.message);
       toast({
         title: 'Authentication error',
-        description: error?.message || 'Something went wrong. Please try again.',
+        description: error.message || 'Something went wrong. Please try again.',
         variant: 'destructive',
       });
     } finally {
       setIsLoading(false);
     }
   };
+  
+  if (isLoading) {
+    return <AuthLoadingState message={isSignIn ? "Signing in..." : "Creating account..."} />;
+  }
   
   return (
     <div className="min-h-screen flex flex-col justify-center items-center bg-background relative overflow-hidden">
@@ -86,136 +95,110 @@ export default function Auth() {
       </div>
       
       <div className="w-full max-w-md mx-auto px-6 z-10">
-        {/* Auth Card - Enhanced glassmorphic effect with more transparency in dark mode */}
-        <div className="backdrop-blur-2xl bg-white/20 dark:bg-black/25 border border-white/30 dark:border-white/10 rounded-xl shadow-[0_8px_32px_rgba(0,0,0,0.15)] dark:shadow-[0_8px_32px_rgba(0,0,0,0.45)] p-8 animate-scale-in ring-1 ring-white/50 dark:ring-white/15">
-          {/* Card Header */}
-          <div className="text-center mb-8 animate-fade-in">
-            <h1 className="text-3xl font-bold tracking-tight mb-2 text-foreground">
-              {isSignIn ? 'Welcome back!' : 'Create account'}
-            </h1>
-            <p className="text-muted-foreground">
-              {isSignIn ? 'Sign in to your account' : 'Sign up for a new account'}
+        {/* Auth Card */}
+        <div className="bg-card/50 backdrop-blur-lg rounded-lg shadow-lg p-8 border border-border">
+          <div className="text-center mb-8">
+            <h2 className="text-2xl font-bold text-foreground">
+              {isSignIn ? 'Welcome back' : 'Create an account'}
+            </h2>
+            <p className="text-muted-foreground mt-2">
+              {isSignIn 
+                ? 'Sign in to your account to continue' 
+                : 'Get started with your free account'}
             </p>
           </div>
-          
-          {/* Auth Form */}
-          <form onSubmit={handleAuth} className="space-y-5">
-            <div className="space-y-2">
-              <Label htmlFor="email" className="text-sm font-medium block text-foreground">
-                Email
-              </Label>
-              <div className="relative">
-                <Input
-                  id="email"
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  placeholder="name@example.com"
-                  className="w-full px-4 py-2 bg-white/15 dark:bg-black/30 backdrop-blur-md border border-white/30 dark:border-white/10 rounded-lg focus:ring-2 focus:ring-primary/50 text-foreground"
-                  required
-                />
-              </div>
+
+          {error && (
+            <div className="mb-4 p-3 bg-destructive/10 text-destructive rounded-md text-sm">
+              {error}
             </div>
-            
+          )}
+
+          <form onSubmit={handleAuth} className="space-y-4">
             {!isSignIn && (
-              <>
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="firstName" className="text-sm font-medium block text-foreground">
-                      First Name
-                    </Label>
-                    <Input
-                      id="firstName"
-                      type="text"
-                      value={firstName}
-                      onChange={(e) => setFirstName(e.target.value)}
-                      placeholder="John"
-                      className="w-full px-4 py-2 bg-white/15 dark:bg-black/30 backdrop-blur-md border border-white/30 dark:border-white/10 rounded-lg focus:ring-2 focus:ring-primary/50 text-foreground"
-                      required={!isSignIn}
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="lastName" className="text-sm font-medium block text-foreground">
-                      Last Name
-                    </Label>
-                    <Input
-                      id="lastName"
-                      type="text"
-                      value={lastName}
-                      onChange={(e) => setLastName(e.target.value)}
-                      placeholder="Doe"
-                      className="w-full px-4 py-2 bg-white/15 dark:bg-black/30 backdrop-blur-md border border-white/30 dark:border-white/10 rounded-lg focus:ring-2 focus:ring-primary/50 text-foreground"
-                      required={!isSignIn}
-                    />
-                  </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="firstName">First Name</Label>
+                  <Input
+                    id="firstName"
+                    value={firstName}
+                    onChange={(e) => setFirstName(e.target.value)}
+                    required
+                    placeholder="John"
+                  />
                 </div>
-              </>
-            )}
-            
-            <div className="space-y-2">
-              <div className="flex justify-between">
-                <Label htmlFor="password" className="text-sm font-medium block text-foreground">
-                  Password
-                </Label>
-                {isSignIn && (
-                  <Link to="/reset-password" className="text-sm text-primary/90 hover:text-primary transition-colors">
-                    Forgot password?
-                  </Link>
-                )}
+                <div className="space-y-2">
+                  <Label htmlFor="lastName">Last Name</Label>
+                  <Input
+                    id="lastName"
+                    value={lastName}
+                    onChange={(e) => setLastName(e.target.value)}
+                    required
+                    placeholder="Doe"
+                  />
+                </div>
               </div>
+            )}
+
+            <div className="space-y-2">
+              <Label htmlFor="email">Email</Label>
+              <Input
+                id="email"
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                required
+                placeholder="john@example.com"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="password">Password</Label>
               <div className="relative">
                 <Input
                   id="password"
                   type={showPassword ? 'text' : 'password'}
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  placeholder="••••••••"
-                  className="w-full px-4 py-2 bg-white/15 dark:bg-black/30 backdrop-blur-md border border-white/30 dark:border-white/10 rounded-lg pr-10 focus:ring-2 focus:ring-primary/50 text-foreground"
                   required
-                  minLength={6}
+                  placeholder="••••••••"
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-foreground/70 hover:text-foreground transition-colors"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
                 >
-                  {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                  {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                 </button>
               </div>
             </div>
-            
-            <Button
-              type="submit"
-              disabled={isLoading}
-              className="w-full py-2.5 px-4 bg-primary/90 hover:bg-primary text-primary-foreground rounded-lg font-medium transition-all backdrop-blur-sm border border-primary/30 shadow-[0_4px_16px_rgba(0,0,0,0.1)] hover:shadow-[0_6px_20px_rgba(0,0,0,0.15)] disabled:opacity-50 disabled:pointer-events-none flex items-center justify-center space-x-2"
-            >
+
+            <Button type="submit" className="w-full" disabled={isLoading}>
               {isLoading ? (
-                <div className="h-5 w-5 border-2 border-primary-foreground border-t-transparent rounded-full animate-spin" />
+                <div className="flex items-center space-x-2">
+                  <div className="animate-spin h-4 w-4 border-2 border-background border-t-transparent rounded-full" />
+                  <span>{isSignIn ? 'Signing in...' : 'Creating account...'}</span>
+                </div>
               ) : (
-                <>
+                <div className="flex items-center justify-center space-x-2">
                   <span>{isSignIn ? 'Sign in' : 'Create account'}</span>
-                  <ArrowRight size={16} />
-                </>
+                  <ArrowRight className="h-4 w-4" />
+                </div>
               )}
             </Button>
-            
-            {/* Removed the "or" divider here */}
-            
-            <div className="mt-6 text-center">
-              <button
-                type="button"
-                onClick={() => setIsSignIn(!isSignIn)}
-                className="text-primary/90 hover:text-primary transition-colors text-sm font-medium"
-              >
-                {isSignIn ? "Don't have an account? Sign up" : "Already have an account? Sign in"}
-              </button>
-            </div>
           </form>
-        </div>
-        
-        {/* Footer */}
-        <div className="mt-8 text-center text-sm text-muted-foreground/70 animate-fade-in">
-          <p>&copy; {new Date().getFullYear()} Folio. All rights reserved.</p>
+
+          <div className="mt-6 text-center">
+            <button
+              type="button"
+              onClick={() => setIsSignIn(!isSignIn)}
+              className="text-sm text-muted-foreground hover:text-foreground"
+            >
+              {isSignIn 
+                ? "Don't have an account? Sign up" 
+                : "Already have an account? Sign in"}
+            </button>
+          </div>
         </div>
       </div>
     </div>

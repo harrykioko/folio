@@ -2,7 +2,8 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
 import { handlePolicyError, PolicyError } from '@/types/errors';
 import { useToast } from '@/hooks/use-toast';
-import React from 'react';
+import React, { useCallback } from 'react';
+import debounce from 'lodash/debounce';
 
 interface UseFormDataOptions<TData> {
   table: string;
@@ -11,10 +12,14 @@ interface UseFormDataOptions<TData> {
   enabled?: boolean;
   onSuccess?: (data: TData) => void;
   onError?: (error: PolicyError) => void;
+  staleTime?: number; // Time in milliseconds before data is considered stale
+  cacheTime?: number; // Time in milliseconds before data is removed from cache
+  debounceMs?: number; // Time in milliseconds to debounce updates
 }
 
 /**
  * A custom hook for managing form data with Supabase integration and policy-aware error handling.
+ * Includes performance optimizations like query caching and request debouncing.
  * 
  * @template TData - The type of data being managed, must extend Record<string, unknown>
  * 
@@ -25,12 +30,15 @@ interface UseFormDataOptions<TData> {
  * @param {boolean} [options.enabled=true] - Whether the query should be enabled
  * @param {function} [options.onSuccess] - Callback for successful operations
  * @param {function} [options.onError] - Callback for error handling
+ * @param {number} [options.staleTime=30000] - Time before data is considered stale (30s default)
+ * @param {number} [options.cacheTime=300000] - Time before data is removed from cache (5m default)
+ * @param {number} [options.debounceMs=1000] - Time to debounce updates (1s default)
  * 
  * @returns {Object} An object containing:
  * - data: The fetched/updated data
  * - isLoading: Loading state for the query
  * - error: Any error that occurred
- * - update: Function to update the data
+ * - update: Debounced function to update the data
  * - isUpdating: Loading state for updates
  * - updateError: Any error that occurred during update
  * 
@@ -43,12 +51,15 @@ export function useFormData<TData extends Record<string, unknown>>({
   select = '*',
   enabled = true,
   onSuccess,
-  onError
+  onError,
+  staleTime = 30000, // 30 seconds
+  cacheTime = 300000, // 5 minutes
+  debounceMs = 1000 // 1 second
 }: UseFormDataOptions<TData>) {
   const queryClient = useQueryClient();
   const { toast } = useToast();
 
-  // Query for fetching form data
+  // Query for fetching form data with caching
   const { data, isLoading, error } = useQuery<TData, PolicyError>({
     queryKey: [table, id],
     queryFn: async () => {
@@ -71,7 +82,11 @@ export function useFormData<TData extends Record<string, unknown>>({
         throw policyError;
       }
     },
-    enabled: enabled && !!id
+    enabled: enabled && !!id,
+    staleTime,
+    cacheTime,
+    retry: 2, // Retry failed requests twice
+    retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000) // Exponential backoff
   });
 
   // Handle query success
@@ -81,9 +96,9 @@ export function useFormData<TData extends Record<string, unknown>>({
     }
   }, [data, onSuccess]);
 
-  // Mutation for updating form data
-  const mutation = useMutation<TData, PolicyError, TData>({
-    mutationFn: async (formData) => {
+  // Create a debounced update function
+  const debouncedUpdate = useCallback(
+    debounce(async (formData: TData) => {
       try {
         const { data: result, error } = await supabase
           .from(table)
@@ -93,13 +108,27 @@ export function useFormData<TData extends Record<string, unknown>>({
           .single();
 
         if (error) throw handlePolicyError(error);
-        return result as unknown as TData;
+        
+        // Update cache immediately for optimistic updates
+        queryClient.setQueryData([table, id], result as unknown as TData);
+        
+        onSuccess?.(result as unknown as TData);
       } catch (error) {
         const policyError = handlePolicyError(error);
         onError?.(policyError);
-        throw policyError;
+        toast({
+          title: 'Error',
+          description: policyError.message,
+          variant: 'destructive'
+        });
       }
-    },
+    }, debounceMs),
+    [table, id, queryClient, onSuccess, onError, toast]
+  );
+
+  // Mutation for handling updates
+  const mutation = useMutation<TData, PolicyError, TData>({
+    mutationFn: debouncedUpdate,
     onSuccess: (data) => {
       // Invalidate and refetch
       queryClient.invalidateQueries({ queryKey: [table, id] });

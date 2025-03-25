@@ -10,6 +10,18 @@ export class PolicyError extends Error {
   }
 }
 
+// Authentication error class
+export class AuthError extends Error {
+  constructor(
+    message: string,
+    public readonly code: string = 'AUTH_ERROR',
+    public readonly details?: Record<string, any>
+  ) {
+    super(message);
+    this.name = 'AuthError';
+  }
+}
+
 // Specific policy error types
 export class PolicyViolationError extends PolicyError {
   constructor(
@@ -44,6 +56,10 @@ export class PolicyValidationError extends PolicyError {
 // Type guard functions
 export function isPolicyError(error: unknown): error is PolicyError {
   return error instanceof PolicyError;
+}
+
+export function isAuthError(error: unknown): error is AuthError {
+  return error instanceof AuthError;
 }
 
 export function isPolicyViolationError(error: unknown): error is PolicyViolationError {
