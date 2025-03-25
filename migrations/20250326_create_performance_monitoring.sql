@@ -161,7 +161,7 @@ VALUES
 CREATE OR REPLACE FUNCTION monitoring.verify_monitoring_setup()
 RETURNS TABLE (
     table_name TEXT,
-    exists BOOLEAN,
+    table_exists BOOLEAN,
     has_rls BOOLEAN,
     has_indexes BOOLEAN,
     has_triggers BOOLEAN
